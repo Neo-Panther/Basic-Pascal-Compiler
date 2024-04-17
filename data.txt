@@ -1,0 +1,4 @@
+program forif;
+var
+  i, j: integer;
+end
