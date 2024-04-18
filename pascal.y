@@ -70,6 +70,7 @@ operation: operation OPERATOR operation|'(' operation OPERATOR operation ')'|n1
 
 if:condition THEN block_begin else;
 
+condition: 
 else: ELSE block_begin ';'|';';
 %%
 
