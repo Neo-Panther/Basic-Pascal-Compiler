@@ -57,11 +57,8 @@ while : condition DO block_begin
     printf("correct while loop");
 };
 
-
-
 n1: ID|NUMBER|ID '[' operation ']';
 n2: ID|ID '[' operation ']';
-
 
 operation: operation OPERATOR operation|'(' operation OPERATOR operation ')'|n1|'(' n1 ')'
 {
