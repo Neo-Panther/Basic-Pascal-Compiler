@@ -22,7 +22,7 @@ Start :  PROGRAM ID ';' VAR var_section block_begin '.'
       exit(0);
 };
 
-var_section: var_list var_section | var_list
+var_section: var_list var_section | var_list|
 { 
     printf("var_section correct    ");
 };
@@ -41,7 +41,7 @@ block_sup: stmnt block_sup|stmnt
     printf("correct block\n");
 };
 
-stmnt:  WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';'
+stmnt:  WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';'|
 {
     printf("stmt correct");
 }
