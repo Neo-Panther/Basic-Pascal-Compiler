@@ -44,10 +44,10 @@ then        {printf("%d                        %s                   KEYWORD \n",
 "of"        {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }   
 "write"     {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
 "writeln"   {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
-";"         {printf("%d                        %s                   SEMICOLON \n",line_no,yytext); }
-","         {printf("%d                        %s                   COMMA \n",line_no,yytext); }
-":"         {printf("%d                        %s                   COLON \n",line_no,yytext); }
-"."         {printf("%d                        %s                   DOT \n",line_no,yytext); }
+";"         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
+","         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
+":"         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
+"."         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
 "["            {}
 "]"            {}
 "("              {}
