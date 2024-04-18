@@ -11,7 +11,7 @@
 
 %start Start 
 %token ID NUMBER BIN_OPERATOR STRING
-%token ARRAY THEN ASSIGNMENT_OPERATOR NOT
+%token ARRAY THEN ASSIGNMENT_OPERATOR NOT COMMENT_HANDLER
 %token PROGRAM VAR TO IF ELSE WHILE FOR DO DOWNTO
 %token BGN END READ WRITE TYPE OF WRITELN
 %%
@@ -41,12 +41,12 @@ block_sup: stmnt block_sup|stmnt
     printf("correct block\n");
 };
 
-stmnt:  WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';'|
+stmnt: WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';'|
 {
     printf("stmt correct");
 }
-write: opvalue ',' write | STRING ',' write | aopvalue |STRING;
 
+write: opvalue ',' write | STRING ',' write | aopvalue |STRING;
 
 fr: ID ASSIGNMENT_OPERATOR operation TO operation DO block_begin | ID ASSIGNMENT_OPERATOR operation DOWNTO operation DO block_begin
 {

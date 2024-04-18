@@ -18,6 +18,7 @@ operator "+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="
 {space}  {}
 \n { line_no++;  }
 \"[^\"]*\"  {return STRING;}
+"//".*"\n"     {}
 ":="        {return ASSIGNMENT_OPERATOR;}
 then        {return THEN;}
 NOT         {return NOT;}

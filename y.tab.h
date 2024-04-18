@@ -47,22 +47,23 @@
      THEN = 263,
      ASSIGNMENT_OPERATOR = 264,
      NOT = 265,
-     PROGRAM = 266,
-     VAR = 267,
-     TO = 268,
-     IF = 269,
-     ELSE = 270,
-     WHILE = 271,
-     FOR = 272,
-     DO = 273,
-     DOWNTO = 274,
-     BGN = 275,
-     END = 276,
-     READ = 277,
-     WRITE = 278,
-     TYPE = 279,
-     OF = 280,
-     WRITELN = 281
+     COMMENT_HANDLER = 266,
+     PROGRAM = 267,
+     VAR = 268,
+     TO = 269,
+     IF = 270,
+     ELSE = 271,
+     WHILE = 272,
+     FOR = 273,
+     DO = 274,
+     DOWNTO = 275,
+     BGN = 276,
+     END = 277,
+     READ = 278,
+     WRITE = 279,
+     TYPE = 280,
+     OF = 281,
+     WRITELN = 282
    };
 #endif
 /* Tokens.  */
@@ -74,22 +75,23 @@
 #define THEN 263
 #define ASSIGNMENT_OPERATOR 264
 #define NOT 265
-#define PROGRAM 266
-#define VAR 267
-#define TO 268
-#define IF 269
-#define ELSE 270
-#define WHILE 271
-#define FOR 272
-#define DO 273
-#define DOWNTO 274
-#define BGN 275
-#define END 276
-#define READ 277
-#define WRITE 278
-#define TYPE 279
-#define OF 280
-#define WRITELN 281
+#define COMMENT_HANDLER 266
+#define PROGRAM 267
+#define VAR 268
+#define TO 269
+#define IF 270
+#define ELSE 271
+#define WHILE 272
+#define FOR 273
+#define DO 274
+#define DOWNTO 275
+#define BGN 276
+#define END 277
+#define READ 278
+#define WRITE 279
+#define TYPE 280
+#define OF 281
+#define WRITELN 282
 
 
 
