@@ -10,6 +10,7 @@ int line_no=1;
 letter [a-zA-Z]
 underscore _
 digit [0-9]
+char ['].[']
 space [\t ]*
 type ("boolean"|"integer"|"real"|"char")
 operator "+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="
@@ -41,6 +42,10 @@ NOT         {return NOT;}
 "of"         {return OF;}   
 "write"      { return WRITE; }
 "writeln"   { return WRITELN; }
+{letter}({letter}|{digit}|{underscore})*  { printf("\n identifier \n%s",yytext);return ID; }
+"-"?{digit}+"."{digit}{1,7} {return  NUMBER;}
+"-"?{digit}+   {return NUMBER; }
+{char}      {return NUMBER;}
 ";"          {printf("%s",yytext);return yytext[0];}
 ","          { printf("\n %s",yytext); return yytext[0];}
 ":"          { printf("\n %s",yytext);return yytext[0];}
@@ -50,10 +55,5 @@ NOT         {return NOT;}
 "("              {return yytext[0];}
 ")"              {return yytext[0];}
 
-{letter}({letter}|{digit}|{underscore})*  { printf("\n identifier \n%s",yytext);return ID; }
-{digit}+   {return NUMBER; }
-
 .          {}
 %%
-
-

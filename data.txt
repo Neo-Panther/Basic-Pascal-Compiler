@@ -1,17 +1,36 @@
-program Example9;
+program SelectionSort;
 var
-  i: Integer;
+  numbers: array[1..10] of Integer; // Array to store 10 integers
+  i, j, minIndex, temp: Integer; // Variables for looping and temporary storag
 begin
-  i := 10;
-  if i > 10 then
+  write("Enter 10 integer values:"); // Prompt the user to enter 10 integers
+  for i := 1 to 10 do // Loop to read 10 integers from the user
   begin
-    i := 10;
-    i := i - 1;
-    write(i);
-  end
-  else
+    read(numbers[i]); // Read each integer and store it in the array
+  end;
+  // Selection sort algorithm to sort the array in ascending order
+  for i := 1 to 10 - 1 do // Outer loop for passes
   begin
-    i := 20;
-    write(i);
+    minIndex := i; // Assume the current index has the minimum value initially
+    for j := i + 1 to 10 do // Inner loop to find the index of the minimum value
+    begin
+      if numbers[j] < numbers[minIndex] then // Compare with the current minimum
+      begin
+        minIndex := j; // Update the index of the minimum value
+      end;
+    end;
+    // Swap the current element with the minimum value found
+    temp := numbers[i];
+    numbers[i] := numbers[minIndex];
+    numbers[minIndex] := temp;
+  end;
+  write("Sorted array:"); // Output message indicating the sorted array
+  for i := 1 to 10 do // Loop to output the sorted array elements
+  begin
+    write(numbers[i]); // Output each element of the sorted array
+    if i < 10 then // Add a comma if it's not the last element
+    begin
+      write(", ");
+    end;
   end;
 end.

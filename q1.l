@@ -15,12 +15,13 @@ type ("boolean"|"integer"|"real"|"char")
 operator "+"|"*"|"-"|"/"|"%"
 boolean_op  "and"|"or"|"NOT"
 relational_op ">"|">="|"<>"|">"|"<"|"<="|"="
+char ['].[']
 %%
 
 {space}  {}
 \n { line_no++;  }
 \"[^\"]*\"  {}
-"//".*"\n"     {}
+"//".*"\n"     {line_no++;}
 ":="        {printf("%d                        %s                   ASSIGNMENT_STATEMENT \n",line_no,yytext);}
 then        {printf("%d                        %s                   KEYWORD \n",line_no,yytext);}
 {boolean_op}        {printf("%d                        %s                   BOOLEAN_OPERATOR \n",line_no,yytext);}
@@ -44,25 +45,25 @@ then        {printf("%d                        %s                   KEYWORD \n",
 "of"        {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }   
 "write"     {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
 "writeln"   {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
+{letter}({letter}|{digit}|{underscore})*   {printf("%d                        %s                   IDENTIFIER \n",line_no,yytext); } 
+"-"?{digit}+"."{digit}{1,7} {printf("%d                        %s                   REAL NUMBER \n",line_no,yytext); }
+"-"?{digit}+   {printf("%d                        %s                   NUMBER \n",line_no,yytext); } 
+{char} {printf("%d                        %s                   CHAR \n",line_no,yytext); }  
 ";"         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
 ","         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
 ":"         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
 "."         {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext); }
-"["            {}
-"]"            {}
-"("              {}
-")"              {}
-
-{letter}({letter}|{digit}|{underscore})*   {printf("%d                        %s                   IDENTIFIER \n",line_no,yytext); } 
-{digit}+   {printf("%d                        %s                   NUMBER \n",line_no,yytext); } 
-
+"["            {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext);}
+"]"            {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext);}
+"("              {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext);}
+")"              {printf("%d                        %s                   PUNCTUATOR \n",line_no,yytext);}
 .          {}
 %%
 
 
 int main()
 {
-   {printf("LINE NUMBER                     LEXXEME                 TOKEN TYPE \n"); }
+   {printf("LINE NUMBER                 LEXXEME                     TOKEN TYPE \n"); }
    yyin=fopen("data.txt","r");
    yylex();
 }
