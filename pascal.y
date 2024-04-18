@@ -10,10 +10,10 @@
 
 
 %start Start 
-%token ID NUMBER KEYWORD OPERATOR RELATIONAL_OPERATOR B_OPERATOR
-%token PUNCTUATOR ARRAY THEN ASSIGNMENT_OPERATOR NOT UOP
-%token PROGRAM INTEGER REAL BOOLEAN CHAR VAR TO IF ELSE WHILE FOR DO Q
-%token BGN END READ WRITE SEMICOLON TYPE COMMA COLON  OF FORIF ANY
+%token ID NUMBER BIN_OPERATOR STRING
+%token ARRAY THEN ASSIGNMENT_OPERATOR NOT
+%token PROGRAM VAR TO IF ELSE WHILE FOR DO DOWNTO
+%token BGN END READ WRITE TYPE OF WRITELN
 %%
 
 Start :  PROGRAM ID ';' VAR var_section block_begin '.'
@@ -41,14 +41,14 @@ block_sup: stmnt block_sup|stmnt
     printf("correct block\n");
 };
 
-stmnt:  WRITE '(' write ')' ';' | READ '(' n2 ')' ';' | n2 ASSIGNMENT_OPERATOR operation ';' |FOR fr ';' |WHILE while';'| IF if
+stmnt:  WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';'
 {
     printf("stmt correct");
 }
-write: n2 ',' write | ANY ',' write | n2 |ANY;
+write: opvalue ',' write | STRING ',' write | aopvalue |STRING;
 
 
-fr: ID ASSIGNMENT_OPERATOR operation TO operation DO block_begin 
+fr: ID ASSIGNMENT_OPERATOR operation TO operation DO block_begin | ID ASSIGNMENT_OPERATOR operation DOWNTO operation DO block_begin
 {
     printf("correct for loop");
 };
@@ -57,19 +57,19 @@ while : condition DO block_begin
     printf("correct while loop");
 };
 
-n1: ID|NUMBER|ID '[' operation ']';
-n2: ID|ID '[' operation ']';
+opvalue: ID|NUMBER|ID '[' operation ']';  // operation values which return a value
+aopvalue: ID|ID '[' operation ']';  // operation values which can be assigned stuff
 
-operation: operation OPERATOR operation|'(' operation OPERATOR operation ')'|n1|'(' n1 ')'
+operation: operation BIN_OPERATOR operation |'(' operation ')' | opvalue | NOT operation
 {
     printf("operation successful");
 };
 
 if:condition THEN block_begin else;
 
-condition:
+condition: operation
 {
-
+    printf("True if this operation returns boolean type");
 }; 
 
 

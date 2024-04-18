@@ -12,25 +12,21 @@ underscore _
 digit [0-9]
 space [\t ]*
 type ("boolean"|"integer"|"real"|"char")
-relop ">"|">="|"<>"|">"|"<"|"<="|"="
-blop  "and"|"or"
-operator "+"|"*"|"\-"|"/"|"%"
+operator "+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="
 %%
 
 {space}  {}
 \n { line_no++;  }
-\"[^\"]*\"  {return ANY;}
+\"[^\"]*\"  {return STRING;}
 ":="        {return ASSIGNMENT_OPERATOR;}
 then        {return THEN;}
 NOT         {return NOT;}
-{operator}  {return OPERATOR;}
-{blop}      {return B_OPERATOR;}
-{relop}     {return RELATIONAL_OPERATOR;}
+"+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="  {printf("\nbop %s",yytext);return BIN_OPERATOR;}
 {type}      {printf("%s\n",yytext);return TYPE;}
 "program"    { printf("%s\n",yytext);return PROGRAM; }
 "var"        { return VAR; }
 "to"         { return TO; }
-"downto"        {return TO;}
+"downto"        {return DOWNTO;}
 "if"         { return IF; }
 "else"       { return ELSE; }
 "while"      {return WHILE; }
@@ -43,7 +39,7 @@ NOT         {return NOT;}
 "readln"    {return READ;}
 "of"         {return OF;}   
 "write"      { return WRITE; }
-"writeln"   { return WRITE; }
+"writeln"   { return WRITELN; }
 ";"          {printf("%s",yytext);return yytext[0];}
 ","          { printf("\n %s",yytext); return yytext[0];}
 ":"          { printf("\n %s",yytext);return yytext[0];}
