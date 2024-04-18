@@ -21,7 +21,7 @@ operator "+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="
 ":="        {return ASSIGNMENT_OPERATOR;}
 then        {return THEN;}
 NOT         {return NOT;}
-"+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="  {printf("\nbop %s",yytext);return BIN_OPERATOR;}
+{operator}  {printf("\nbop %s",yytext);return BIN_OPERATOR;}
 {type}      {printf("%s\n",yytext);return TYPE;}
 "program"    { printf("%s\n",yytext);return PROGRAM; }
 "var"        { return VAR; }
