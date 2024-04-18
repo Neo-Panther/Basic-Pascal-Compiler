@@ -45,31 +45,37 @@
      ARITHMETIC_OPERATOR = 261,
      OPERATOR = 262,
      RELATIONAL_OPERATOR = 263,
-     BOOLEAN_OPERATOR = 264,
+     B_OPERATOR = 264,
      PUNCTUATOR = 265,
      ARRAY = 266,
-     PROGRAM = 267,
-     INTEGER = 268,
-     REAL = 269,
-     BOOLEAN = 270,
-     CHAR = 271,
-     VAR = 272,
-     TO = 273,
-     IF = 274,
-     ELSE = 275,
-     WHILE = 276,
-     FOR = 277,
-     DO = 278,
-     BGN = 279,
-     END = 280,
-     READ = 281,
-     WRITE = 282,
-     SEMICOLON = 283,
-     TYPE = 284,
-     COMMA = 285,
-     COLON = 286,
-     statements = 287,
-     OF = 288
+     THEN = 267,
+     ASSIGNMENT_OPERATOR = 268,
+     NOT = 269,
+     UOP = 270,
+     PROGRAM = 271,
+     INTEGER = 272,
+     REAL = 273,
+     BOOLEAN = 274,
+     CHAR = 275,
+     VAR = 276,
+     TO = 277,
+     IF = 278,
+     ELSE = 279,
+     WHILE = 280,
+     FOR = 281,
+     DO = 282,
+     Q = 283,
+     BGN = 284,
+     END = 285,
+     READ = 286,
+     WRITE = 287,
+     SEMICOLON = 288,
+     TYPE = 289,
+     COMMA = 290,
+     COLON = 291,
+     OF = 292,
+     FORIF = 293,
+     ANY = 294
    };
 #endif
 /* Tokens.  */
@@ -79,31 +85,37 @@
 #define ARITHMETIC_OPERATOR 261
 #define OPERATOR 262
 #define RELATIONAL_OPERATOR 263
-#define BOOLEAN_OPERATOR 264
+#define B_OPERATOR 264
 #define PUNCTUATOR 265
 #define ARRAY 266
-#define PROGRAM 267
-#define INTEGER 268
-#define REAL 269
-#define BOOLEAN 270
-#define CHAR 271
-#define VAR 272
-#define TO 273
-#define IF 274
-#define ELSE 275
-#define WHILE 276
-#define FOR 277
-#define DO 278
-#define BGN 279
-#define END 280
-#define READ 281
-#define WRITE 282
-#define SEMICOLON 283
-#define TYPE 284
-#define COMMA 285
-#define COLON 286
-#define statements 287
-#define OF 288
+#define THEN 267
+#define ASSIGNMENT_OPERATOR 268
+#define NOT 269
+#define UOP 270
+#define PROGRAM 271
+#define INTEGER 272
+#define REAL 273
+#define BOOLEAN 274
+#define CHAR 275
+#define VAR 276
+#define TO 277
+#define IF 278
+#define ELSE 279
+#define WHILE 280
+#define FOR 281
+#define DO 282
+#define Q 283
+#define BGN 284
+#define END 285
+#define READ 286
+#define WRITE 287
+#define SEMICOLON 288
+#define TYPE 289
+#define COMMA 290
+#define COLON 291
+#define OF 292
+#define FORIF 293
+#define ANY 294
 
 
 

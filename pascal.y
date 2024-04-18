@@ -10,8 +10,8 @@
 
 
 %start Start 
-%token ID NUMBER KEYWORD ARITHMETIC_OPERATOR OPERATOR RELATIONAL_OPERATOR BOOLEAN_OPERATOR
-%token PUNCTUATOR ARRAY THEN ASSIGNMENT_OPERATOR NOT
+%token ID NUMBER KEYWORD ARITHMETIC_OPERATOR OPERATOR RELATIONAL_OPERATOR B_OPERATOR
+%token PUNCTUATOR ARRAY THEN ASSIGNMENT_OPERATOR NOT UOP
 %token PROGRAM INTEGER REAL BOOLEAN CHAR VAR TO IF ELSE WHILE FOR DO Q
 %token BGN END READ WRITE SEMICOLON TYPE COMMA COLON  OF FORIF ANY
 %%
@@ -63,14 +63,19 @@ n1: ID|NUMBER|ID '[' operation ']';
 n2: ID|ID '[' operation ']';
 
 
-operation: operation OPERATOR operation|'(' operation OPERATOR operation ')'|n1
+operation: operation OPERATOR operation|'(' operation OPERATOR operation ')'|n1|'(' n1 ')'
 {
     printf("operation successful");
 };
 
 if:condition THEN block_begin else;
 
-condition: 
+condition:
+{
+
+}; 
+
+
 else: ELSE block_begin ';'|';';
 %%
 

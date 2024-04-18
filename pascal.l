@@ -13,6 +13,7 @@ digit [0-9]
 space [\t ]*
 type ("boolean"|"integer"|"real"|"char")
 relop ">"|">="|"<>"|">"|"<"|"<="|"="
+blop  "and"|"or"
 operator "+"|"*"|"\-"|"/"|"%"
 %%
 
@@ -23,6 +24,7 @@ operator "+"|"*"|"\-"|"/"|"%"
 then        {return THEN;}
 NOT         {return NOT;}
 {operator}  {return OPERATOR;}
+{blop}      {return B_OPERATOR;}
 {relop}     {return RELATIONAL_OPERATOR;}
 {type}      {printf("%s\n",yytext);return TYPE;}
 "program"    { printf("%s\n",yytext);return PROGRAM; }
