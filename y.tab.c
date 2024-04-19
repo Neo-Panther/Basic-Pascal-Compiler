@@ -1446,7 +1446,7 @@ yyreduce:
         case 2:
 #line 20 "pascal.y"
     {
-    printf("coreect");
+    printf("SYNATX CORRECT");
       exit(0);
 }
     break;
@@ -1733,12 +1733,13 @@ yyreturn:
 
 void yyerror()
 {
-printf("Invalid statement:\n"); exit(0);
+printf("Invalid SYNATX:\n"); exit(0);
 }
 
 
 int main() {
     printf("he\n");
-    yyparse();
+    FILE* fp = fopen("data.txt");
+    yyparse(fp);
     return 0;
 }

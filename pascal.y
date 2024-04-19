@@ -18,7 +18,7 @@
 
 Start :  PROGRAM ID ';' VAR var_section block_begin '.'
 {
-    printf("coreect");
+    printf("SYNATX CORRECT");
       exit(0);
 };
 
@@ -78,12 +78,12 @@ else: ELSE block_begin ';'|';';
 
 void yyerror()
 {
-printf("Invalid statement:\n"); exit(0);
+printf("Invalid SYNATX:\n"); exit(0);
 }
 
 
 int main() {
-    printf("he\n");
+   
     yyparse();
     return 0;
 }

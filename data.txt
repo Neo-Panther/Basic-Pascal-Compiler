@@ -1,33 +1,32 @@
-program SelectionSort;
+program InsertionSortReal;
 var
-  numbers: array[1..10] of Integer; // Array to store 10 integers
-  i, j, minIndex, temp: Integer; // Variables for looping and temporary storag
+  numbers: array[1..10] of Real; // Array to store 10 real numbers
+  i, j: Integer; // Variables for looping
+  key: Real; // Variable to store the key element
 begin
-  write("Enter 10 integer values:"); // Prompt the user to enter 10 integers
-  for i := 1 to 10 do // Loop to read 10 integers from the user
+  write("Enter 10 real values:"); // Prompt the user to enter 10 real numbers
+  for i := 1 to 10 do // Loop to read 10 real numbers from the user
   begin
-    read(numbers[i]); // Read each integer and store it in the array
+    read(numbers[i]); // Read each real number and store it in the array
   end;
-  // Selection sort algorithm to sort the array in ascending order
-  for i := 1 to 10 - 1 do // Outer loop for passes
+
+  // Insertion sort algorithm to sort the array in ascending order
+  for i := 2 to 10 do // Start from the second element
   begin
-    minIndex := i; // Assume the current index has the minimum value initially
-    for j := i + 1 to 10 do // Inner loop to find the index of the minimum value
+    key := numbers[i]; // Store the current element as key
+    j := i - 1; // Initialize j to the previous index
+    // Move elements of numbers[1..i-1], that are greater than key, to one position ahead
+    while (j > 0) and (numbers[j] > key) do
     begin
-      if numbers[j] < numbers[minIndex] then // Compare with the current minimum
-      begin
-        minIndex := j; // Update the index of the minimum value
-      end;
+      numbers[j + 1] := numbers[j];
+      j := j - 1;
     end;
-    // Swap the current element with the minimum value found
-    temp := numbers[i];
-    numbers[i] := numbers[minIndex];
-    numbers[minIndex] := temp;
+    numbers[j + 1] := key; // Place key at its correct position in sorted sequence
   end;
   write("Sorted array:"); // Output message indicating the sorted array
   for i := 1 to 10 do // Loop to output the sorted array elements
   begin
-    write(numbers[i]); // Output each element of the sorted array
+   
     if i < 10 then // Add a comma if it's not the last element
     begin
       write(", ");
