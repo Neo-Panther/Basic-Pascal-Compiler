@@ -18,43 +18,42 @@
 
 Start :  PROGRAM ID ';' VAR var_section block_begin '.'
 {
-    printf("SYNATX CORRECT");
+    printf("SYNTAX CORRECT");
       exit(0);
 };
 
 var_section: var_list var_section | var_list|
 { 
-    printf("var_section correct    ");
 };
 
 var_list: list ':' stype ';'
 {
-    printf("var_list correct \n");
+   
 }; 
 stype: TYPE | ARRAY '['  NUMBER '.' '.' NUMBER ']' OF TYPE ;
 list: ID ',' list | ID 
-{printf("correct list");};
+{};
 
 block_begin:BGN block_sup END; 
 block_sup: stmnt block_sup|stmnt
 {
-    printf("correct block\n");
+   
 };
 
 stmnt: WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';'|
 {
-    printf("stmt correct");
+   
 }
 
 write: opvalue ',' write | STRING ',' write | aopvalue |STRING;
 
 fr: ID ASSIGNMENT_OPERATOR operation TO operation DO block_begin | ID ASSIGNMENT_OPERATOR operation DOWNTO operation DO block_begin
 {
-    printf("correct for loop");
+  
 };
 while : condition DO block_begin 
 {
-    printf("correct while loop");
+    
 };
 
 opvalue: ID|NUMBER|ID '[' operation ']';  // operation values which return a value
@@ -62,15 +61,14 @@ aopvalue: ID|ID '[' operation ']';  // operation values which can be assigned st
 
 operation: operation BIN_OPERATOR operation |'(' operation ')' | opvalue | NOT operation
 {
-    printf("operation successful");
+
 };
 
 if:condition THEN block_begin else;
 
 condition: operation
 {
-    printf("True if this operation returns boolean type");
-}; 
+}
 
 
 else: ELSE block_begin ';'|';';

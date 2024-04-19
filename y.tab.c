@@ -469,11 +469,11 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    19,    19,    25,    25,    26,    30,    34,    34,    35,
-      35,    38,    39,    39,    44,    44,    44,    44,    44,    44,
-      44,    45,    49,    49,    49,    49,    51,    51,    55,    60,
-      60,    60,    61,    61,    63,    63,    63,    63,    68,    70,
-      76,    76
+       0,    19,    19,    25,    25,    26,    29,    33,    33,    34,
+      34,    37,    38,    38,    43,    43,    43,    43,    43,    43,
+      43,    44,    48,    48,    48,    48,    50,    50,    54,    59,
+      59,    59,    60,    60,    62,    62,    62,    62,    67,    69,
+      74,    74
 };
 #endif
 
@@ -1446,7 +1446,7 @@ yyreduce:
         case 2:
 #line 20 "pascal.y"
     {
-    printf("SYNATX CORRECT");
+    printf("SYNTAX CORRECT");
       exit(0);
 }
     break;
@@ -1454,67 +1454,65 @@ yyreduce:
   case 5:
 #line 26 "pascal.y"
     { 
-    printf("var_section correct    ");
 }
     break;
 
   case 6:
-#line 31 "pascal.y"
+#line 30 "pascal.y"
     {
-    printf("var_list correct \n");
+   
 }
     break;
 
   case 10:
-#line 36 "pascal.y"
-    {printf("correct list");}
+#line 35 "pascal.y"
+    {}
     break;
 
   case 13:
-#line 40 "pascal.y"
+#line 39 "pascal.y"
     {
-    printf("correct block\n");
+   
 }
     break;
 
   case 21:
-#line 45 "pascal.y"
+#line 44 "pascal.y"
     {
-    printf("stmt correct");
+   
 }
     break;
 
   case 27:
-#line 52 "pascal.y"
+#line 51 "pascal.y"
     {
-    printf("correct for loop");
+  
 }
     break;
 
   case 28:
-#line 56 "pascal.y"
+#line 55 "pascal.y"
     {
-    printf("correct while loop");
+    
 }
     break;
 
   case 37:
-#line 64 "pascal.y"
+#line 63 "pascal.y"
     {
-    printf("operation successful");
+
 }
     break;
 
   case 39:
-#line 71 "pascal.y"
+#line 70 "pascal.y"
     {
-    printf("True if this operation returns boolean type");
 }
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1518 "y.tab.c"
+#line 1516 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1728,7 +1726,7 @@ yyreturn:
 }
 
 
-#line 77 "pascal.y"
+#line 75 "pascal.y"
 
 
 void yyerror()
@@ -1738,8 +1736,7 @@ printf("Invalid SYNATX:\n"); exit(0);
 
 
 int main() {
-    printf("he\n");
-    FILE* fp = fopen("data.txt");
-    yyparse(fp);
+   
+    yyparse();
     return 0;
 }

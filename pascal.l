@@ -23,9 +23,9 @@ operator "+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="
 ":="        {return ASSIGNMENT_OPERATOR;}
 then        {return THEN;}
 NOT         {return NOT;}
-{operator}  {printf("\nbop %s",yytext);return BIN_OPERATOR;}
-{type}      {printf("%s\n",yytext);return TYPE;}
-"program"    { printf("%s\n",yytext);return PROGRAM; }
+{operator}  {return BIN_OPERATOR;}
+{type}      {return TYPE;}
+"program"    { return PROGRAM; }
 "var"        { return VAR; }
 "to"         { return TO; }
 "downto"        {return DOWNTO;}
@@ -42,13 +42,13 @@ NOT         {return NOT;}
 "of"         {return OF;}   
 "write"      { return WRITE; }
 "writeln"   { return WRITELN; }
-{letter}({letter}|{digit}|{underscore})*  { printf("\n identifier \n%s",yytext);return ID; }
+{letter}({letter}|{digit}|{underscore})*  { return ID; }
 "-"?{digit}+"."{digit}{1,7} {return  NUMBER;}
 "-"?{digit}+   {return NUMBER; }
 {char}      {return NUMBER;}
-";"          {printf("%s",yytext);return yytext[0];}
-","          { printf("\n %s",yytext); return yytext[0];}
-":"          { printf("\n %s",yytext);return yytext[0];}
+";"          {return yytext[0];}
+","          {  return yytext[0];}
+":"          { return yytext[0];}
 "."          {return yytext[0];}
 "["            {return yytext[0];}
 "]"            {return yytext[0];}

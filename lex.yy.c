@@ -912,17 +912,17 @@ YY_RULE_SETUP
 case 8:
 YY_RULE_SETUP
 #line 26 "pascal.l"
-{printf("\nbop %s",yytext);return BIN_OPERATOR;}
+{return BIN_OPERATOR;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 27 "pascal.l"
-{printf("%s\n",yytext);return TYPE;}
+{return TYPE;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 28 "pascal.l"
-{ printf("%s\n",yytext);return PROGRAM; }
+{ return PROGRAM; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
@@ -1007,7 +1007,7 @@ YY_RULE_SETUP
 case 27:
 YY_RULE_SETUP
 #line 45 "pascal.l"
-{ printf("\n identifier \n%s",yytext);return ID; }
+{ return ID; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
@@ -1027,17 +1027,17 @@ YY_RULE_SETUP
 case 31:
 YY_RULE_SETUP
 #line 49 "pascal.l"
-{printf("%s",yytext);return yytext[0];}
+{return yytext[0];}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
 #line 50 "pascal.l"
-{ printf("\n %s",yytext); return yytext[0];}
+{  return yytext[0];}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 51 "pascal.l"
-{ printf("\n %s",yytext);return yytext[0];}
+{ return yytext[0];}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
