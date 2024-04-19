@@ -13,13 +13,13 @@ digit [0-9]
 char ['].[']
 space [\t ]*
 type ("boolean"|"integer"|"real"|"char")
-operator "+"|"*"|"-"|"/"|"%"|"and"|"or"|">"|">="|"<>"|">"|"<"|"<="|"="
+operator "+"|"*"|"-"|"/"|"%"|"and"|"or"|">="|"<>"|">"|"<"|"<="|"="
 %%
 
 {space}  {}
 \n { line_no++;  }
 \"[^\"]*\"  {return STRING;}
-"//".*"\n"     {}
+"//".*"\n"     {line_no++;}
 ":="        {return ASSIGNMENT_OPERATOR;}
 then        {return THEN;}
 NOT         {return NOT;}
@@ -38,7 +38,6 @@ NOT         {return NOT;}
 "begin"      { return BGN; }
 "end"        { return END; }
 "read"       { return READ; }
-"readln"    {return READ;}
 "of"         {return OF;}   
 "write"      { return WRITE; }
 "writeln"   { return WRITELN; }

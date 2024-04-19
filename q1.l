@@ -14,15 +14,16 @@ space [\t ]*
 type ("boolean"|"integer"|"real"|"char")
 operator "+"|"*"|"-"|"/"|"%"
 boolean_op  "and"|"or"|"NOT"
-relational_op ">"|">="|"<>"|">"|"<"|"<="|"="
-char ['].[']
+relational_op ">"|">="|"<>"|"<"|"<="|"="
+char ['](.|\n)[']
 %%
 
 {space}  {}
 \n { line_no++;  }
 \"[^\"]*\"  {}
-"//".*"\n"     {line_no++;}
-":="        {printf("%d                        %s                   ASSIGNMENT_STATEMENT \n",line_no,yytext);}
+"//".*"\n"     {
+  printf("%d                        //                   COMMENT(text skipped) \n",line_no,yytext);line_no++;}
+":="        {printf("%d                        %s                   ASSIGNMENT_OPERATOR \n",line_no,yytext);}
 then        {printf("%d                        %s                   KEYWORD \n",line_no,yytext);}
 {boolean_op}        {printf("%d                        %s                   BOOLEAN_OPERATOR \n",line_no,yytext);}
 {operator}  {printf("%d                        %s                   ARITHMETIC_OPERATOR \n",line_no,yytext);}
@@ -41,7 +42,6 @@ then        {printf("%d                        %s                   KEYWORD \n",
 "begin"     {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
 "end"       {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
 "read"      {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
-"readln"    {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
 "of"        {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }   
 "write"     {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
 "writeln"   {printf("%d                        %s                   KEYWORD \n",line_no,yytext); }
@@ -63,7 +63,10 @@ then        {printf("%d                        %s                   KEYWORD \n",
 
 int main()
 {
-   {printf("LINE NUMBER                 LEXXEME                     TOKEN TYPE \n"); }
-   yyin=fopen("data.txt","r");
+  printf("Enter file name(max 1000 chars): ");
+  char file[1000];
+  gets(file);
+   {printf("LINE NUMBER                 LEXEME                     TOKEN TYPE \n"); }
+   yyin=fopen(file,"r");
    yylex();
 }

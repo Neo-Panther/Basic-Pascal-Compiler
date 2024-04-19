@@ -5,24 +5,24 @@
     #include<ctype.h>
     int yylex();
    void yyerror();
-    
+  extern FILE* yyin;
 %}
 
 
 %start Start 
 %token ID NUMBER BIN_OPERATOR STRING
-%token ARRAY THEN ASSIGNMENT_OPERATOR NOT COMMENT_HANDLER
+%token ARRAY THEN ASSIGNMENT_OPERATOR NOT
 %token PROGRAM VAR TO IF ELSE WHILE FOR DO DOWNTO
 %token BGN END READ WRITE TYPE OF WRITELN
 %%
 
 Start :  PROGRAM ID ';' VAR var_section block_begin '.'
 {
-    printf("SYNTAX CORRECT");
+    printf("valid input\n");
       exit(0);
 };
 
-var_section: var_list var_section | var_list|
+var_section: var_list var_section | 
 { 
 };
 
@@ -35,17 +35,17 @@ list: ID ',' list | ID
 {};
 
 block_begin:BGN block_sup END; 
-block_sup: stmnt block_sup|stmnt
+block_sup: stmnt block_sup|
 {
    
 };
 
-stmnt: WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';'|
+stmnt: WRITE '(' write ')' ';' | READ '(' aopvalue ')' ';' | aopvalue ASSIGNMENT_OPERATOR operation ';' | FOR fr ';' |WHILE while';'| IF if | WRITELN '(' write ')' ';' | block_begin ';'
 {
    
 }
 
-write: opvalue ',' write | STRING ',' write | aopvalue |STRING;
+write: opvalue ',' write | STRING ',' write | opvalue |STRING;
 
 fr: ID ASSIGNMENT_OPERATOR operation TO operation DO block_begin | ID ASSIGNMENT_OPERATOR operation DOWNTO operation DO block_begin
 {
@@ -76,12 +76,15 @@ else: ELSE block_begin ';'|';';
 
 void yyerror()
 {
-printf("Invalid SYNATX:\n"); exit(0);
+printf("syntax error\n"); exit(1);
 }
 
 
 int main() {
-   
-    yyparse();
-    return 0;
+  printf("Enter file name(max 1000 chars): ");
+  char file[1000];
+  gets(file);
+  yyin=fopen(file,"r");
+  yyparse();
+  return 0;
 }
