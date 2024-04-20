@@ -59,7 +59,7 @@ while : condition DO block_begin
 opvalue: ID|NUMBER|ID '[' operation ']';  // operation values which return a value
 aopvalue: ID|ID '[' operation ']';  // operation values which can be assigned stuff
 
-operation: operation BIN_OPERATOR operation |'(' operation ')' | opvalue | NOT operation
+operation: operation BIN_OPERATOR operation |'(' operation ')' | opvalue | NOT operation | operation '-' operation | '-' operation
 {
 
 };

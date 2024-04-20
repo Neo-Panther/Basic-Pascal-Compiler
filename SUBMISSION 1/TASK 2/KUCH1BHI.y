@@ -6,6 +6,7 @@
     int yylex();
    void yyerror();
   extern FILE* yyin;
+  extern int line_no;
 %}
 
 
@@ -59,7 +60,7 @@ while : condition DO block_begin
 opvalue: ID|NUMBER|ID '[' operation ']';  // operation values which return a value
 aopvalue: ID|ID '[' operation ']';  // operation values which can be assigned stuff
 
-operation: operation BIN_OPERATOR operation |'(' operation ')' | opvalue | NOT operation
+operation: operation BIN_OPERATOR operation |'(' operation ')' | opvalue | NOT operation | operation '-' operation | '-' operation
 {
 
 };
@@ -76,7 +77,7 @@ else: ELSE block_begin ';'|';';
 
 void yyerror()
 {
-printf("syntax error\n"); exit(1);
+printf("syntax error%d\n", line_no); exit(1);
 }
 
 
