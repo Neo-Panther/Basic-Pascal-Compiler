@@ -6,7 +6,6 @@
     int yylex();
    void yyerror();
   extern FILE* yyin;
-  extern int line_no;
 %}
 
 
@@ -77,7 +76,7 @@ else: ELSE block_begin ';'|';';
 
 void yyerror()
 {
-printf("syntax error%d\n", line_no); exit(1);
+printf("syntax error\n"); exit(1);
 }
 
 
