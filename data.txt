@@ -1,35 +1,51 @@
-program InsertionSortReal;
-var
-  numbers: array[1..10] of Real; // Array to store 10 real numbers
-  i, j: Integer; // Variables for looping
-  key: Real; // Variable to store the key element
-begin
-  write("Enter 10 real values:"); // Prompt the user to enter 10 real numbers
-  for i := 1 to 10 do // Loop to read 10 real numbers from the user
-  begin
-    read(numbers[i]); // Read each real number and store it in the array
-  end;
+PROGRAM binary_search;
 
-  // Insertion sort algorithm to sort the array in ascending order
-  for i := 2 to 10 do // Start from the second element
-  begin
-    key := numbers[i]; // Store the current element as key
-    j := i - 1; // Initialize j to the previous index
-    // Move elements of numbers[1..i-1], that are greater than key, to one position ahead
-    while (j > 0) and (numbers[j] > key) do
-    begin
-      numbers[j + 1] := numbers[j];
-      j := j - 1;
-    end;
-    numbers[j + 1] := key; // Place key at its correct position in sorted sequence
-  end;
-  write("Sorted array:"); // Output message indicating the sorted array
-  for i := 1 to 10 do // Loop to output the sorted array elements
-  begin
-   
-    if i < 10 then // Add a comma if it's not the last element
-    begin
-      write(", ");
-    end;
-  end;
-end.
+VAR  arr:ARRAY[1..100] OF integer; 
+     mid,low,high,search:integer; 
+     i,n:integer; 
+     found:boolean;
+BEGIN 
+     writeln("Binary search");
+     writeln("array length:");
+     read(n); 
+     a:=-1;
+     b:=+1;
+     writeln("Enter ",n," numbers: ");
+     FOR i:=1 TO n DO 
+     BEGIN 
+          read(arr[i]); 
+     END; 
+     writeln("what number do you want to search?");
+     read(search); 
+     low:=1; 
+     high:=n; 
+     found:=false; 
+     while ((found=true) OR (high<low)) DO
+     BEGIN
+           mid:=(low+high) / 2; 
+           IF (search<arr[mid]) THEN 
+           BEGIN
+           high:=mid-1; 
+           END;
+           IF (search>arr[mid]) THEN 
+           BEGIN
+           low:=mid+1; 
+           END;
+           IF (search=arr[mid]) THEN 
+           BEGIN
+           found:=true;
+           END
+           ELSE 
+           BEGIN
+           found:=false; 
+           END;
+     END; 
+     IF found=true THEN
+     BEGIN
+     writeln("ELEMENT FOUND");
+     END
+     ELSE
+     BEGIN
+     writeln("ELEMENT NOT FOUND");
+     END;
+EnD.

@@ -13,7 +13,7 @@ digit [0-9]
 char ['].[']
 space [\t ]*
 type ("boolean"|"integer"|"real"|"char")
-operator "+"|"*"|"/"|"%"|"and"|"or"|">="|"<>"|">"|"<"|"<="|"="
+operator "*"|"/"|"%"|"and"|"or"|">="|"<>"|">"|"<"|"<="|"="
 %%
 
 {space}  {}
@@ -46,6 +46,7 @@ NOT         {return NOT;}
 {digit}+   {return NUMBER; }
 {char}      {return NUMBER;}
 "-"          {return yytext[0];}
+"+"          {return yytext[0];}
 ";"          {return yytext[0];}
 ","          {  return yytext[0];}
 ":"          { return yytext[0];}
