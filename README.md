@@ -5,7 +5,7 @@ This project aims to build a compiler for a language close to pascal, but with f
 Run the following in order (in folder TASK 1):
 ```
 > flex KUCH1BHI.l
-> gcc lex.yy.c -ll
+> gcc lex.yy.c
 > ./a.out
 ```
 Enter the input file name at the prompt.
@@ -15,13 +15,10 @@ Run the following in order (in folder TASK 2):
 ```
 > flex KUCH1BHI.l
 > yacc -d KUCH1BHI.y
-> gcc lex.yy.c y.tab.c -ll
+> gcc lex.yy.c y.tab.c
 > ./a.out
 ```
 Enter the input file name at the prompt.
-
-## Important Notes (Assumptions)
-1. Unknown characters in the input file are treated as a blank space.
 
 ## Group Members
 

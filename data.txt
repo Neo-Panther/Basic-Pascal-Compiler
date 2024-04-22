@@ -42,11 +42,12 @@ BEGIN
            END;
      END; 
      IF found=true THEN
-     BEGIN$
+     BEGIN
      writeln("ELEMENT FOUND");
      END
      ELSE
      BEGIN
      writeln("ELEMENT NOT FOUND");
      END;
+     a:='c ';
 EnD.

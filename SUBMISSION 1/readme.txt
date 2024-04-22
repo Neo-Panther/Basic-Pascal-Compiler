@@ -20,9 +20,6 @@ Run the following in order (in folder TASK 2):
 ```
 Enter the input file name at the prompt.
 
-## Important Notes (Assumptions)
-1. Unknown characters in the input file are treated as a blank space.
-
 ## Group Members
 
 S.No.  ID             Name

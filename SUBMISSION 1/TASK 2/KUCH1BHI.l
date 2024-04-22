@@ -11,7 +11,7 @@ letter [a-zA-Z]
 underscore _
 digit [0-9]
 char ['].[']
-space [\t ]*
+space [\t \r]*
 type ("boolean"|"integer"|"real"|"char")
 operator "*"|"/"|"%"|"and"|"or"|">="|"<>"|">"|"<"|"<="|"="
 %%
@@ -56,5 +56,5 @@ NOT         {return NOT;}
 "("              {return yytext[0];}
 ")"              {return yytext[0];}
 
-.          {}
+.         {return yytext[0];}
 %%
