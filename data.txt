@@ -49,5 +49,5 @@ BEGIN
      BEGIN
      writeln("ELEMENT NOT FOUND");
      END;
-     a:='c ';
+     a:='c';
 EnD.
