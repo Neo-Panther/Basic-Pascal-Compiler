@@ -25,7 +25,7 @@ Enter the input file name at the prompt.
 
 2. Compiling all files into a.out leads to a warning for the usage of `gets`. This can be safely ignored until the size of the input file name is less than 1000 characters (as also mentioned in the prompt).
 
-3. Unknown characters in the input file are ignored (treated as a blank space).
+3. Unknown characters in the input file are treated as a blank space.
 
 ## Group Members
 

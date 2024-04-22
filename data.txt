@@ -42,8 +42,8 @@ BEGIN
            END;
      END; 
      IF found=true THEN
-     BEGIN
-     writeln("ELEMENT FOUND"); $$
+     BEG$IN
+     writeln("ELEMENT FOUND");
      END
      ELSE
      BEGIN
