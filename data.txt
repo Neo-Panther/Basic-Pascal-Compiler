@@ -5,6 +5,7 @@ VAR  arr:ARRAY[1..100] OF integer;
      i,n:integer; 
      found:boolean;
 BEGIN 
+     // Nonsense
      writeln("Binary search");
      writeln("array length:");
      read(n); 
@@ -42,7 +43,7 @@ BEGIN
      END; 
      IF found=true THEN
      BEGIN
-     writeln("ELEMENT FOUND");
+     writeln("ELEMENT FOUND"); $$
      END
      ELSE
      BEGIN

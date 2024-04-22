@@ -22,7 +22,7 @@ char ['](.|\n)[']
 \n { line_no++;  }
 \"[^\"]*\"  {}
 "//".*"\n"     {
-  printf("%d                        //                   COMMENT(text skipped) \n",line_no,yytext);line_no++;}
+  printf("%d                        //                   COMMENT(text skipped) \n",line_no);line_no++;}
 ":="        {printf("%d                        %s                   ASSIGNMENT_OPERATOR \n",line_no,yytext);}
 then        {printf("%d                        %s                   KEYWORD \n",line_no,yytext);}
 {boolean_op}        {printf("%d                        %s                   BOOLEAN_OPERATOR \n",line_no,yytext);}
