@@ -42,7 +42,7 @@ BEGIN
            END;
      END; 
      IF found=true THEN
-     BEG$IN
+     BEGIN$
      writeln("ELEMENT FOUND");
      END
      ELSE

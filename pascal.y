@@ -14,6 +14,7 @@
 %token ARRAY THEN ASSIGNMENT_OPERATOR NOT
 %token PROGRAM VAR TO IF ELSE WHILE FOR DO DOWNTO
 %token BGN END READ WRITE TYPE OF WRITELN
+%left NOT BIN_OPERATOR '-' '+'
 %%
 
 Start :  PROGRAM ID ';' VAR var_section block_begin '.'
@@ -83,7 +84,8 @@ printf("syntax error\n"); exit(1);
 int main() {
   printf("Enter file name(max 1000 chars): ");
   char file[1000];
-  gets(file);
+  fgets(file, 1000, stdin);
+  file[strlen(file)-1]=0;
   yyin=fopen(file,"r");
   yyparse();
   return 0;

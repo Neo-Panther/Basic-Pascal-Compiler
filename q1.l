@@ -64,7 +64,8 @@ int main()
 {
   printf("Enter file name(max 1000 chars): ");
   char file[1000];
-  gets(file);
+  fgets(file, 1000, stdin);
+  file[strlen(file)-1]=0;
    {printf("LINE NUMBER                 LEXEME                     TOKEN TYPE \n"); }
    yyin=fopen(file,"r");
    yylex();
