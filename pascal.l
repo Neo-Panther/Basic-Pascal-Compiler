@@ -1,8 +1,9 @@
-%option noyywrap
 %option yylineno
 %option caseless
 %{
 #include <stdio.h>
+#include <string.h>
+#include "extra.h"
 #include "y.tab.h"
 int line_no=1;
 %}
@@ -12,44 +13,54 @@ underscore _
 digit [0-9]
 char ['].[']
 space [\t \r]*
-type ("boolean"|"integer"|"real"|"char")
-operator "*"|"/"|"%"|"and"|"or"|">="|"<>"|">"|"<"|"<="|"="
 %%
 
-{space}  {}
+{space}  {;}
 \n { line_no++;  }
-\"[^\"]*\"  {return STRING;}
+\"[^\"]*\"  {strcpy(yylval.sname.name, yytext); return STRING;}
 "//".*"\n"     {line_no++;}
-":="        {return ASSIGNMENT_OPERATOR;}
-then        {return THEN;}
-NOT         {return NOT;}
-{operator}  {return BIN_OPERATOR;}
-{type}      {return TYPE;}
-"program"    { return PROGRAM; }
-"var"        { return VAR; }
-"to"         { return TO; }
-"downto"        {return DOWNTO;}
-"if"         { return IF; }
-"else"       { return ELSE; }
-"while"      {return WHILE; }
-"for"        {return FOR; }
-"do"         { return DO; }
-"array"      { return ARRAY; }
-"begin"      { return BGN; }
-"end"        { return END; }
-"read"       { return READ; }
-"of"         {return OF;}   
-"write"      { return WRITE; }
-"writeln"   { return WRITELN; }
-{letter}({letter}|{digit}|{underscore})*  { return ID; }
-{digit}+"."{digit}{1,7} {return  NUMBER;}
-{digit}+   {return NUMBER; }
-{char}      {return NUMBER;}
-"-"          {return yytext[0];}
-"+"          {return yytext[0];}
+":="        {strcpy(yylval.sname.name, yytext); return ASSIGNMENT_OPERATOR;}
+then        {strcpy(yylval.sname.name, yytext); return THEN;}
+NOT         {strcpy(yylval.sname.name, yytext); return NOT;}
+"*"         {strcpy(yylval.sname.name, yytext); return MUL;}
+"/"         {strcpy(yylval.sname.name, yytext); return DIV;}
+"%"         {strcpy(yylval.sname.name, yytext); return MOD;}
+"and"       {strcpy(yylval.sname.name, yytext); return AND;}
+"or"        {strcpy(yylval.sname.name, yytext); return OR;}
+">="        {strcpy(yylval.sname.name, yytext); return GE;}
+"<>"        {strcpy(yylval.sname.name, yytext); return NE;}
+">"         {strcpy(yylval.sname.name, yytext); return GT;}
+"<"         {strcpy(yylval.sname.name, yytext); return LT;}
+"<="        {strcpy(yylval.sname.name, yytext); return LE;}
+"="         {strcpy(yylval.sname.name, yytext); return EQ;}
+"boolean"   {strcpy(yylval.sname.name, yytext); return TBOOL;}
+"integer"   {strcpy(yylval.sname.name, yytext); return TINT;}
+"real"      {strcpy(yylval.sname.name, yytext); return TREAL;}
+"char"      {strcpy(yylval.sname.name, yytext); return TCHAR;}
+"program"    {strcpy(yylval.sname.name, yytext); return PROGRAM; }
+"var"        {strcpy(yylval.sname.name, yytext); return VAR; }
+"to"         {strcpy(yylval.sname.name, yytext); return TO; }
+"downto"        {strcpy(yylval.sname.name, yytext); return DOWNTO;}
+"if"         {strcpy(yylval.sname.name, yytext); return IF; }
+"else"       {strcpy(yylval.sname.name, yytext); return ELSE; }
+"while"      {strcpy(yylval.sname.name, yytext); return WHILE; }
+"for"        {strcpy(yylval.sname.name, yytext); return FOR; }
+"do"         {strcpy(yylval.sname.name, yytext); return DO; }
+"array"      {strcpy(yylval.sname.name, yytext); return ARRAY; }
+"begin"      {strcpy(yylval.sname.name, yytext); return BGN; }
+"end"        {strcpy(yylval.sname.name, yytext); return END; }
+"read"       {strcpy(yylval.sname.name, yytext); return READ; }
+"write"      {strcpy(yylval.sname.name, yytext); return WRITE; }
+"of"         {strcpy(yylval.sname.name, yytext); return OF;}   
+{letter}({letter}|{digit}|{underscore})*  {strcpy(yylval.sname.name, yytext); return ID; }
+{digit}+"."{digit}{1,7} {strcpy(yylval.sname.name, yytext); return LREAL;}
+{digit}+   {strcpy(yylval.sname.name, yytext); return LINTEGER; }
+{char}      {strcpy(yylval.sname.name, yytext); return LCHAR;}
+"-"          {strcpy(yylval.sname.name, yytext); return MINUS;}
+"+"          {strcpy(yylval.sname.name, yytext); return PLUS;}
 ";"          {return yytext[0];}
-","          {  return yytext[0];}
-":"          { return yytext[0];}
+","          {return yytext[0];}
+":"          {return yytext[0];}
 "."          {return yytext[0];}
 "["            {return yytext[0];}
 "]"            {return yytext[0];}
@@ -58,3 +69,6 @@ NOT         {return NOT;}
 
 .         {return yytext[0];}
 %%
+int yywrap(){
+  return 1;
+}

@@ -1,22 +1,22 @@
 PROGRAM binary_search;
 
-VAR  arr:ARRAY[1..100] OF integer; 
+VAR  arr:ARRAY[-1..100] OF integer; 
      mid,low,high,search:integer; 
      i,n:integer; 
      found:boolean;
 BEGIN 
      // Nonsense
-     writeln("Binary search");
-     writeln("array length:");
+     write("Binary search");
+     write("array length:");
      read(n); 
      a:=-1;
      b:=+1;
-     writeln("Enter ",n," numbers: ");
+     write("Enter ",n," numbers: ");
      FOR i:=1 TO n DO 
      BEGIN 
           read(arr[i]); 
      END; 
-     writeln("what number do you want to search?");
+     write("what number do you want to search?");
      read(search); 
      low:=1; 
      high:=n; 
@@ -43,11 +43,11 @@ BEGIN
      END; 
      IF found=true THEN
      BEGIN
-     writeln("ELEMENT FOUND");
+     write("ELEMENT FOUND");
      END
      ELSE
      BEGIN
-     writeln("ELEMENT NOT FOUND");
+     write("ELEMENT NOT FOUND");
      END;
      a:='c';
 EnD.
