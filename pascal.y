@@ -6,6 +6,7 @@
   #include<stdbool.h>
   #include<math.h>
   #include "extra.h"
+  #include "treegen.h"
   // 127 variable name max length
   int yylex();
   void yyerror(const char *s);
@@ -30,6 +31,7 @@
     else if (isupper(chr)) return chr - 'A';
     else return 26;
   }
+  binarynode* syntaxroot;
   // Type, avalue has to be set separately
   void addToSymbolTable(char* name){
     bool newv = false;
@@ -151,14 +153,6 @@
     }
   }
 
-  // A Binary Tree as the Syntax|Parse Tree
-  typedef struct BinaryTreeNode{
-    struct BinaryTreeNode* left;
-    struct BinaryTreeNode* right;
-    char* token;
-  } binarynode;
-  binarynode* syntaxroot;
-
   binarynode* mknode(binarynode* left, binarynode* right, char* token){
     binarynode* new_node = (binarynode*)calloc(1, sizeof(binarynode*));
     new_node->token = (char*)calloc(strlen(token+1), sizeof(char));
@@ -166,17 +160,6 @@
     new_node->left = left;
     new_node->right = right;
     return new_node;
-  }
-  // TODO: pretty print
-  void printSyntaxTree(binarynode*tree) {
-    int i; 
-    if (tree->left) {
-      printSyntaxTree(tree->left); 
-    } 
-    printf("%s, ", tree->token); 
-    if (tree->right) {  
-      printSyntaxTree(tree->right); 
-    }
   }
   float getRealValue(char* name){
     int num = atoi(name);
@@ -695,7 +678,8 @@ int main() {
   memset(symboltable, 0, 27);
   list_vars_i = 0;
   yyparse();
-  printSyntaxTree(syntaxroot);
+  /* printSyntaxTree(syntaxroot); */
+  ex(syntaxroot);
   printf("\n");
   char f[127];
   memset(f, 0, sizeof(char));
