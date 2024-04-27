@@ -8,8 +8,6 @@
   #include "extra.h"
   // 127 variable name max length
   int yylex();
-  char gtype = 'i';
-  adata gatype;
   void yyerror(const char *s);
   extern int line_no;
   typedef union Value{
@@ -25,12 +23,15 @@
     uvalue value;
   } trienode;
   trienode* symboltable[27];
+  trienode* list_vars[20];
+  int list_vars_i;
   int calcValue(char chr){
     if (islower(chr)) return chr - 'a';
     else if (isupper(chr)) return chr - 'A';
     else return 26;
   }
-  void addToSymbolTable(char* name, char type, adata avalue){
+  // Type, avalue has to be set separately
+  void addToSymbolTable(char* name){
     bool newv = false;
     if(symboltable[calcValue(name[0])] == (trienode*)0){
       newv = true;
@@ -50,8 +51,7 @@
     }
     cnode->isValid = 1;
     cnode->isInitialized = 0;
-    cnode->type = type;
-    if(type == 'a') cnode->value.avalue = avalue;
+    list_vars[list_vars_i++] = cnode;
   }
   // NOTE: DONT call this for arrays. for arrays, get value and update manually
   void updateSymbolTable(char* name, int ivalue, float fvalue){
@@ -101,7 +101,6 @@
       default: printf("-%c-", type);
     }
   }
-  // TODO: memset current_name 0 b4 start, init input: 0, symbol table, ...
   void printSymbolTable(int idx, trienode* cnodes[27], char current_name[127]){
     if(idx == 0) printf("Variable    Type    Value\n");
     else if(idx == 127) return;
@@ -146,6 +145,7 @@
     for(int i = 0; i < 27; i++){
       if(cnodes[i] != (trienode*)0){
         freeSymbolTable(cnodes[i]->children);
+        if(cnodes[i]->type == 'a') free(cnodes[i]->value.avalue.array);
         free(cnodes[i]);
       }
     }
@@ -183,10 +183,11 @@
     int numlen;
     if(num == 0) numlen = 0;
     else numlen = round(log(num)/log(10.0));
-    int den = atoi(name+1+numlen);
+    int den = atoi(name+2+numlen);
     int denlen;
     if(num == 0) denlen = 0;
-    else denlen = round(log(den)/log(10.0));
+    else denlen = strlen(name)-2-numlen;
+    printf("got real %d+%f/%f     %d\n", num, (double)den,pow(10.0, denlen), denlen);
     return (float)num+((float)den/(float)pow(10.0, denlen));
   }
 %}
@@ -214,7 +215,9 @@
 
 Start: PROGRAM ID ';' VAR var_section block_begin '.'{
   adata t;
-  addToSymbolTable($2.name, 'p', t);
+  addToSymbolTable($2.name);
+  list_vars[0]->type = 'p';
+  list_vars_i = 0;
   $4.nd = mknode($5.nd, $6.nd, "var");
   $$.nd = mknode(mknode(NULL, NULL, $2.name), $4.nd, "program");
   syntaxroot = $$.nd;
@@ -232,8 +235,19 @@ var_section: definition var_section {
 // TODO: give type in backward direction
 definition: var_list ':' stype ';'{
   $$.nd = mknode($1.nd, $3.nd, "definition");
-  gtype = $3.type;
-  gatype = $3.atype;
+  for(int i = 0; i < list_vars_i; i++){
+    list_vars[i]->type = $3.type;
+    if($3.type == 'a'){
+      list_vars[i]->value.avalue.first = $3.atype.first;
+      list_vars[i]->value.avalue.last = $3.atype.last;
+      list_vars[i]->value.avalue.type = $3.atype.type;
+      if($3.atype.type != 'r')
+        list_vars[i]->value.avalue.array = calloc($3.atype.last-$3.atype.first+1, sizeof(int));
+      else
+        list_vars[i]->value.avalue.array = calloc($3.atype.last-$3.atype.first+1, sizeof(float));
+    }
+  }
+  list_vars_i = 0;
 };
 stype: ntype {
   $$.type = $1.type;
@@ -284,51 +298,11 @@ ntype: TBOOL{
   $$.type = 'r';
 }
 var_list: ID ',' var_list{
-  $$.type = gtype;
-  $$.atype = gatype;
-  adata atype;
-  if(gtype != 'a'){
-    addToSymbolTable($1.name, gtype, atype);
-  } else {
-    if(gatype.type != 'r'){
-      atype = (adata){gatype.first, gatype.last, gatype.type, calloc(gatype.last-gatype.first+1, sizeof(int))};
-    } else {
-      atype = (adata){gatype.first, gatype.last, gatype.type, calloc(gatype.last-gatype.first+1, sizeof(float))};
-    }
-    switch(gatype.type){
-      case 'r':
-        atype.array = calloc(gatype.last-gatype.first+1, sizeof(float));
-        break;
-      default:
-        atype.array = calloc(gatype.last-gatype.first+1, sizeof(int));
-        break;
-    }
-    addToSymbolTable($1.name, gtype, atype);
-  }
+  addToSymbolTable($1.name);
   $$.nd = mknode(mknode(NULL, NULL, $1.name), $3.nd, "var_list");
 }
 | ID {
-  $$.type = gtype;
-  $$.atype = gatype;
-  adata atype;
-  if(gtype != 'a'){
-    addToSymbolTable($1.name, gtype, atype);
-  } else {
-    if(gatype.type != 'r'){
-      atype = (adata){gatype.first, gatype.last, gatype.type, calloc(gatype.last-gatype.first+1, sizeof(int))};
-    } else {
-      atype = (adata){gatype.first, gatype.last, gatype.type, calloc(gatype.last-gatype.first+1, sizeof(float))};
-    }
-    switch(gatype.type){
-      case 'r':
-        atype.array = calloc(gatype.last-gatype.first+1, sizeof(float));
-        break;
-      default:
-        atype.array = calloc(gatype.last-gatype.first+1, sizeof(int));
-        break;
-    }
-    addToSymbolTable($1.name, gtype, atype);
-  }
+  addToSymbolTable($1.name);
   $$.nd = mknode(NULL, NULL, $1.name);
 };
 
@@ -719,6 +693,7 @@ void yyerror(const char* s){
 
 int main() {
   memset(symboltable, 0, 27);
+  list_vars_i = 0;
   yyparse();
   printSyntaxTree(syntaxroot);
   printf("\n");
