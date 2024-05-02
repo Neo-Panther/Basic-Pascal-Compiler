@@ -12,9 +12,9 @@
   extern int line_no;
   int label_i = 0;
   int temp_var = 0;
-  char tac[45][300];  // 45 max lines of TAC
+  char tac[100][300];  // 100 max lines of TAC
   int tac_i = 0;
-  char s_errors[45][300];  // 45 max lines of semantic errors
+  char s_errors[100][300];  // 100 max lines of semantic errors
   int s_errors_i = 0;
   typedef union Value{
     int nrvalue;
@@ -107,7 +107,7 @@
       case 'c': return "char";
       case 'r': return "real";
       case 'a': return "array";
-      default: return "-wrong-";
+      default: return "-unknown-";
     }
   }
   void printSymbolTable(int idx, trienode* cnodes[27], char current_name[300]){
@@ -243,6 +243,7 @@ definition: var_list ':' stype ';'{
       list_vars[i]->value.avalue.first = $3.atype.first;
       list_vars[i]->value.avalue.last = $3.atype.last;
       list_vars[i]->value.avalue.type = $3.atype.type;
+      list_vars[i]->isInitialized = 1;
       if($3.atype.type != 'r')
         list_vars[i]->value.avalue.array = calloc($3.atype.last-$3.atype.first+1, sizeof(int));
       else
@@ -329,6 +330,9 @@ stmnt: WRITE '(' write ')' ';' {
 }
 | READ '(' aopvalue ')' ';'{
   $$.nd = mknode(mknode(NULL, NULL, "read"), $3.nd, "stmt");
+  if($3.type != 'a'){
+    updateSymbolTable($3.name, 0, 0.0);
+  }
   sprintf(tac[tac_i++], "READ %s\n", $3.name);
 }
 | aopvalue ASSIGNMENT_OPERATOR operation ';'{
@@ -337,25 +341,11 @@ stmnt: WRITE '(' write ')' ';' {
   if(tp != $3.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType(tp), getType($3.type));
   }
-  if($3.type =='r' || ($3.type == 'a' && $3.atype.type == 'r')){
-    sprintf(tac[tac_i++], "%s := %f\n", $1.name, $3.value);
-  } else {
-    sprintf(tac[tac_i++], "%s := %d\n", $1.name, (int)$3.value);
-  }
+  sprintf(tac[tac_i++], "%s := %s\n", $1.name, $3.name);
   if($1.type!='a'){
     updateSymbolTable($1.name, $3.value, $3.value);
   } else {
     trienode* entry = getSymbolTableNode($1.name);
-    if (entry != NULL){
-      if($1.atype.first > entry->value.avalue.last){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Array out-of-bounds access: %s", line_no, $1.name);
-      } else {
-      if($3.atype.type == 'r')
-        ((float*)entry->value.avalue.array)[$1.atype.first - entry->value.avalue.first] = (float)$3.value;
-      else
-        ((int*)entry->value.avalue.array)[$1.atype.first - entry->value.avalue.first] = (int)$3.value;
-      }
-    }
   }
   $$.nd = mknode($1.nd, $3.nd, ":=");
 }
@@ -397,22 +387,15 @@ fr: ID ASSIGNMENT_OPERATOR operation TO operation DO {
   if($1.type != $5.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($5.type));
   }
-  if($3.type =='r'){
-    sprintf(tac[tac_i++], "%s := %f\n", $1.name, $3.value);
-    sprintf($<sname>$.if_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
-    sprintf($<sname>$.else_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nif (%s > %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
-  } else {
-    sprintf(tac[tac_i++], "%s := %d\n", $1.name, (int)$3.value);
-    sprintf($<sname>$.if_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
-    sprintf($<sname>$.else_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nif (%s > %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
-  }
+  sprintf(tac[tac_i++], "%s := %s\n", $1.name, $3.name);
+  sprintf($<sname>$.if_body, "L%d", label_i++);
+  sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+  sprintf($<sname>$.else_body, "L%d", label_i++);
+  sprintf(tac[tac_i++], "\nif (%s > %s) GOTO %s\n", $1.name, $5.name, $<sname>$.else_body);
   updateSymbolTable($1.name, $3.value, $3.value);
 } block_begin {
-  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>7.if_body);
+  sprintf(tac[tac_i++], "%s := %s + 1\n", $1.name, $1.name);
+  sprintf(tac[tac_i++], "GOTO %s\n", $<sname>7.if_body);
 	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>7.else_body);
   $$.nd = mknode(mknode(mknode(mknode(NULL, NULL, $1.name), $3.nd, ":="), $5.nd,"range_upto"), $8.nd, "for");
 }
@@ -423,22 +406,15 @@ fr: ID ASSIGNMENT_OPERATOR operation TO operation DO {
   if($1.type != $5.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($3.type));
   }
-  if($3.type =='r'){
-    sprintf(tac[tac_i++], "%s := %f\n", $1.name, $3.value);
-    sprintf($<sname>$.if_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
-    sprintf($<sname>$.else_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nif (%s < %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
-  } else {
-    sprintf(tac[tac_i++], "%s := %d\n", $1.name, (int)($3.value));
-    sprintf($<sname>$.if_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
-    sprintf($<sname>$.else_body, "L%d", label_i++);
-    sprintf(tac[tac_i++], "\nif (%s < %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
-  }
+  sprintf(tac[tac_i++], "%s := %s\n", $1.name, $3.name);
+  sprintf($<sname>$.if_body, "L%d", label_i++);
+  sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+  sprintf($<sname>$.else_body, "L%d", label_i++);
+  sprintf(tac[tac_i++], "\nif (%s < %s) GOTO %s\n", $1.name, $5.name, $<sname>$.else_body);
   updateSymbolTable($1.name, $3.value, $3.value);
 } block_begin {
-  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>7.if_body);
+  sprintf(tac[tac_i++], "%s := %s - 1\n", $1.name, $1.name);
+  sprintf(tac[tac_i++], "GOTO %s\n", $<sname>7.if_body);
 	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>7.else_body);
   $$.nd = mknode(mknode(mknode(mknode(NULL, NULL, $1.name), $3.nd, ":="), $5.nd,"range_downto"), $8.nd, "for");
 };
@@ -449,21 +425,18 @@ while: operation DO {
   sprintf($<sname>$.if_body, "L%d", label_i++);
   sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
   sprintf($<sname>$.else_body, "L%d", label_i++);
-  if($1.type =='r'){
-    sprintf(tac[tac_i++], "\nif NOT (%f) GOTO %s\n", $1.value, $<sname>$.else_body);
-  } else {
-    sprintf(tac[tac_i++], "\nif NOT (%d) GOTO %s\n", (int)$1.value, $<sname>$.else_body);
-  }
+  sprintf(tac[tac_i++], "\nif NOT (%s) GOTO %s\n", $1.name, $<sname>$.else_body);
 } block_begin {
-  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>3.if_body);
+  sprintf(tac[tac_i++], "GOTO %s\n", $<sname>3.if_body);
 	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>3.else_body);
   $$.nd = mknode($1.nd, $4.nd, "while");
 };
 
 opvalue: ID{
+  strcpy($$.name, $1.name);
   trienode* entry = getSymbolTableNode($1.name);
   $$.value = 0;
-  $$.type = 'i';
+  $$.type = 'u';
   if(entry != NULL){
     $$.type = entry->type;
     if(entry->type == 'a'){
@@ -481,6 +454,7 @@ opvalue: ID{
   $$.nd = mknode(NULL, NULL, tmp);
 }
 | LINTEGER{
+  strcpy($$.name, $1.name);
   $$.type = 'i';
   $$.value = atoi($1.name);
   char tmp[300];
@@ -488,6 +462,7 @@ opvalue: ID{
   $$.nd = mknode(NULL, NULL, tmp);
 }
 | LCHAR{
+  strcpy($$.name, $1.name);
   $$.type = 'c';
   $$.value = $1.name[1];
   char tmp[300];
@@ -495,6 +470,7 @@ opvalue: ID{
   $$.nd = mknode(NULL, NULL, tmp);
 }
 | LREAL{
+  strcpy($$.name, $1.name);
   $$.type = 'r';
   $$.value = getRealValue($1.name);
   char tmp[300];
@@ -502,6 +478,7 @@ opvalue: ID{
   $$.nd = mknode(NULL, NULL, tmp);
 }
 | ID '[' operation ']' {
+  sprintf($$.name, "%.130s[%.130s]", $1.name, $3.name);
   trienode* entry = getSymbolTableNode($1.name);
   if($3.type != 'i'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only integer can be used for array access\n", line_no);
@@ -545,10 +522,10 @@ aopvalue: ID {
   trienode* entry = getSymbolTableNode($1.name);
   $$.type = 'a';
   $$.atype.type = 'i';
-  if($3.type == 'r'){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Real values cannot be used for array access\n", line_no);
+  sprintf($$.name, "%.130s[%.130s]", $1.name, $3.name);
+  if($3.type != 'i'){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only integer values can be used for array access\n", line_no);
   }
-  sprintf($$.name, "%.200s[%d]", $1.name, (int)$3.value);
   if(entry != NULL){
     if(entry->type != 'a'){
       sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only arrays can be used with the [] operator\n", line_no);
@@ -567,7 +544,7 @@ operation: operation PLUS operation{
   if($1.type != $3.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
   }
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
@@ -576,7 +553,7 @@ operation: operation PLUS operation{
   if($1.type != $3.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
   }
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
@@ -585,17 +562,13 @@ operation: operation PLUS operation{
   if($1.type != $3.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: * between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
   }
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation DIV operation{
-  if($3.value == 0){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Division by zero\n", line_no);
-  }
-  $$.value = (float)$1.value / (float)$3.value;
   $$.type = 'r';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
@@ -605,91 +578,90 @@ operation: operation PLUS operation{
   }
   $$.value = (int)$1.value % (int)$3.value;
   $$.type = 'i';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation AND operation{
-  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: AND both value must be boolean (1 and 0)", line_no);
+  if($3.type != 'b' || $1.type != 'b'){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: AND both value must be boolean", line_no);
   }
   $$.value = $1.value && $3.value;
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation OR operation{
-  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: OR both value must be boolean (1 and 0)\n", line_no);
+  if($3.type != 'b' || $1.type != 'b'){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: OR both value must be boolean\n", line_no);
   }
   $$.value = $1.value || $3.value;
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation NE operation{
   $$.value = $1.value != $3.value;
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation GE operation{
-  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+  if($3.type == 'b' || $1.type == 'b'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: >= Not applicable on boolean operands\n", line_no);
   }
   $$.value = ($1.value >= $3.value);
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation LE operation{
-  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+  if($3.type == 'b' || $1.type == 'b'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: <= Not applicable on boolean operands\n", line_no);
   }
   $$.value = ($1.value <= $3.value);
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation EQ operation{
   $$.value = ($1.value == $3.value);
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation LT operation{
-  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+  if($3.type == 'b' || $1.type == 'b'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: < Not applicable on boolean operands\n", line_no);
   }
   $$.value = ($1.value < $3.value);
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation GT operation{
-  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+  if($3.type == 'b' || $1.type == 'b'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: > Not applicable on boolean operands\n", line_no);
   }
   $$.value = ($1.value > $3.value);
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | '(' operation ')'{
+  // TODO: test with brackets and opvalues
   $$ = $2;
 }
 | opvalue {
-  $$.type = $1.type;
-  $$.value = $1.value;
-  $$.nd = $1.nd;
+  $$ = $1;
 }
 | '-' operation {
   if($2.type != 'i' && $2.type != 'r'){
@@ -697,24 +669,24 @@ operation: operation PLUS operation{
   }
   $$.value = -$2.value;
   $$.type = $2.type;
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := -%s\n", $$.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, "-");
 } %prec MUL
 | '+' operation {
   $$.value = $2.value;
   $$.type = $2.type;
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s\n", $$.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, "+");
 } %prec MUL
 | NOT operation {
-  if($2.value == 0 || $2.value == 1){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: NOT - value must be boolean (0 or 1)", line_no);
+  if($2.type != 'b'){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: NOT - value must be boolean", line_no);
   }
   $$.value = ($2.value != 0) ? 1: 0;
   $$.type = 'b';
-  sprintf($$.name, "t%d", temp_var++);
+  sprintf($$.name, "$t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s\n", $$.name, $1.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, $1.name);
 };
@@ -725,13 +697,9 @@ if: operation THEN {
   }
   sprintf($<sname>$.else_body, "L%d", label_i++);
   sprintf($<sname>$.if_body, "L%d", label_i++);
-  if($1.type =='r'){
-    sprintf(tac[tac_i++], "\nif NOT (%f) GOTO %s\n", $1.value, $<sname>$.else_body);
-  } else {
-    sprintf(tac[tac_i++], "\nif NOT (%d) GOTO %s\n", (int)$1.value, $<sname>$.else_body);
-  }
+  sprintf(tac[tac_i++], "\nif NOT (%s) GOTO %s\n", $1.name, $<sname>$.else_body);
 } block_begin {
-  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>3.if_body);
+  sprintf(tac[tac_i++], "GOTO %s\n", $<sname>3.if_body);
   sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>3.else_body);
 } else {
   sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>3.if_body);
@@ -760,7 +728,7 @@ int main() {
   // Print Syntax Tree
   FILE* f = fopen("syntaxtree.txt", "w");
   printSyntaxTree(f, syntaxroot);
-  /* ex(syntaxroot); */
+  fclose(f);
   printf("\n");
 
   // Print Symbol Table
