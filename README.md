@@ -28,3 +28,7 @@ S.No.  ID             Name
 3.     2021A7PS1407H  Subal Tankwal
 4.     2021A7PS2689H  Mihir Kulkarni
 5.     2021A7PS2808H  Shrey Paunwala
+
+## Notes
+
+1. NO PRECEDENCE in this project, use bracketing

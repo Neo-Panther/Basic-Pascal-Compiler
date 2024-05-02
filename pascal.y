@@ -6,11 +6,16 @@
   #include<stdbool.h>
   #include<math.h>
   #include "extra.h"
-  #include "treegen.h"
-  // 127 variable name max length
+  // 300 variable name max length
   int yylex();
   void yyerror(const char *s);
   extern int line_no;
+  int label_i = 0;
+  int temp_var = 0;
+  char tac[45][300];  // 45 max lines of TAC
+  int tac_i = 0;
+  char s_errors[45][300];  // 45 max lines of semantic errors
+  int s_errors_i = 0;
   typedef union Value{
     int nrvalue;
     float rvalue;
@@ -24,7 +29,8 @@
     uvalue value;
   } trienode;
   trienode* symboltable[27];
-  trienode* list_vars[20];
+  trienode* list_vars[20];  // 20 maximum variables in one definition
+  char names[20][300];
   int list_vars_i;
   int calcValue(char chr){
     if (islower(chr)) return chr - 'a';
@@ -48,23 +54,24 @@
       cnode = cnode->children[calcValue(name[i])];
     }
     if(!newv){
-      printf("Line %d: Semantic Error: Multiple declarations of the variable: %s\n", line_no, name);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Multiple declarations of the variable: %s\n", line_no, name);
       return;
     }
     cnode->isValid = 1;
     cnode->isInitialized = 0;
+    strcpy(names[list_vars_i], name);
     list_vars[list_vars_i++] = cnode;
   }
   // NOTE: DONT call this for arrays. for arrays, get value and update manually
   void updateSymbolTable(char* name, int ivalue, float fvalue){
     if(symboltable[calcValue(name[0])] == (trienode*)0){
-      printf("Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
       return;
     }
     trienode* cnode = symboltable[calcValue(name[0])];
     for(int i = 1; i < strlen(name); i += 1){
       if(cnode->children[calcValue(name[i])] == (trienode*)0){
-        printf("Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
         return;
       }
       cnode = cnode->children[calcValue(name[i])];
@@ -76,36 +83,36 @@
   }
   trienode* getSymbolTableNode(char* name){
     if(symboltable[calcValue(name[0])] == (trienode*)0){
-      printf("Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
       return NULL;
     }
     trienode* cnode = symboltable[calcValue(name[0])];
     for(int i = 1; i < strlen(name); i += 1){
       if(cnode->children[calcValue(name[i])] == (trienode*)0){
-        printf("Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
         return NULL;
       }
       cnode = cnode->children[calcValue(name[i])];
     }
     if(!cnode->isValid){
-      printf("Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Undeclared Varable: %s\n", line_no, name);
       return NULL;
     }
     return cnode;
   }
-  void printType(char type){
+  char* getType(char type){
     switch(type){
-      case 'i': printf("integer"); break;
-      case 'b': printf("boolean"); break;
-      case 'c': printf("char"); break;
-      case 'r': printf("real"); break;
-      case 'a': printf("array"); break;
-      default: printf("-%c-", type);
+      case 'i': return "integer";
+      case 'b': return "boolean";
+      case 'c': return "char";
+      case 'r': return "real";
+      case 'a': return "array";
+      default: return "-wrong-";
     }
   }
-  void printSymbolTable(int idx, trienode* cnodes[27], char current_name[127]){
+  void printSymbolTable(int idx, trienode* cnodes[27], char current_name[300]){
     if(idx == 0) printf("Variable    Type    Value\n");
-    else if(idx == 127) return;
+    else if(idx == 300) return;
     for(int i = 0; i < 27; i++){
       if(cnodes[i] != (trienode*)0){
         current_name[idx] = (char)i+'a';
@@ -122,8 +129,7 @@
           } else if(cnodes[i]->type == 'b'){
             printf("%s         BOOLEAN          %d", current_name, cnodes[i]->value.nrvalue);
           } else{
-            printf("::Printing ARRAY %s of Type ", current_name); printType(cnodes[i]->value.avalue.type);
-            printf("::\n");
+            printf("::Printing ARRAY %s of Type %s::\n", current_name, getType(cnodes[i]->value.avalue.type));
             printf("Index                 Value\n");
             for(int j = cnodes[i]->value.avalue.first; j < cnodes[i]->value.avalue.last; j++){
               if(cnodes[i]->value.avalue.type == 'c'){
@@ -170,19 +176,32 @@
     int denlen;
     if(num == 0) denlen = 0;
     else denlen = strlen(name)-2-numlen;
-    printf("got real %d+%f/%f     %d\n", num, (double)den,pow(10.0, denlen), denlen);
     return (float)num+((float)den/(float)pow(10.0, denlen));
+  }
+  void printSErrors(){
+    printf("Number of Semantic Errors: %d\n", s_errors_i);
+    for(int i = 0; i < s_errors_i; i++){
+      printf("%s", s_errors[i]);
+    }
+  }
+  void printTAC(){
+    printf("%d TAC:\n", tac_i);
+    for(int i = 0; i < tac_i; i++){
+      printf("%s", tac[i]);
+    }
+  }
+
+  void printSyntaxTree(FILE* f, binarynode* syntaxroot){
+    if(syntaxroot == NULL) return;
+    fprintf(f, "[%s", syntaxroot->token);
+    printSyntaxTree(f, syntaxroot->left);
+    printSyntaxTree(f, syntaxroot->right);
+    fprintf(f, "]");
   }
 %}
 
 %union {
-  struct syntax_name{
-    char name[127];
-    struct BinaryTreeNode* nd;
-    char type;
-    adata atype;
-    float value;
-  } sname;
+  struct syntax_name sname;
 }
 
 %start Start
@@ -215,12 +234,12 @@ var_section: definition var_section {
 {
   $$.nd = NULL;
 };
-// TODO: give type in backward direction
 definition: var_list ':' stype ';'{
   $$.nd = mknode($1.nd, $3.nd, "definition");
   for(int i = 0; i < list_vars_i; i++){
     list_vars[i]->type = $3.type;
     if($3.type == 'a'){
+      sprintf(tac[tac_i++], "%s: %d > %s\n", names[i], $3.atype.last - $3.atype.first, getType($3.type));
       list_vars[i]->value.avalue.first = $3.atype.first;
       list_vars[i]->value.avalue.last = $3.atype.last;
       list_vars[i]->value.avalue.type = $3.atype.type;
@@ -228,6 +247,8 @@ definition: var_list ':' stype ';'{
         list_vars[i]->value.avalue.array = calloc($3.atype.last-$3.atype.first+1, sizeof(int));
       else
         list_vars[i]->value.avalue.array = calloc($3.atype.last-$3.atype.first+1, sizeof(float));
+    } else {
+      sprintf(tac[tac_i++], "%s : %s\n", names[i], getType($3.type));
     }
   }
   list_vars_i = 0;
@@ -248,7 +269,7 @@ stype: ntype {
   $$.atype.last = atoi($7.name);
   $$.atype.type = $10.type;
   $$.type = 'a';
-  char tmp[127] = "-";
+  char tmp[300] = "-";
   strcat(tmp, $4.name);
   $$.nd = mknode(mknode(mknode(NULL, NULL, tmp), mknode(NULL, NULL, $7.name), "range"), mknode(NULL, NULL, $10.name), "array");
 }
@@ -257,9 +278,9 @@ stype: ntype {
   $$.atype.last = -atoi($8.name);
   $$.atype.type = $11.type;
   $$.type = 'a';
-  char tmp[127] = "-";
+  char tmp[300] = "-";
   strcat(tmp, $4.name);
-  char tmp1[127] = "-";
+  char tmp1[300] = "-";
   strcat(tmp1, $8.name);
   $$.nd = mknode(mknode(mknode(NULL, NULL, tmp), mknode(NULL, NULL, tmp1), "range"), mknode(NULL, NULL, $11.name), "array");
 }
@@ -304,13 +325,18 @@ stmnt: WRITE '(' write ')' ';' {
 }
 | READ '(' aopvalue ')' ';'{
   $$.nd = mknode(mknode(NULL, NULL, "read"), $3.nd, "stmt");
+  sprintf(tac[tac_i++], "READ %s\n", $3.name);
 }
 | aopvalue ASSIGNMENT_OPERATOR operation ';'{
   char tp = $1.type;
   if(tp == 'a') tp = $1.atype.type;
   if(tp != $3.type){
-    printf("Line %d: Semantic Error: Type Mismatch: %s", line_no, $1.name);
-    printf(" of type: "); printType(tp); printf(" is being assigned value of type: "); printType($3.type); printf("\n");
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType(tp), getType($3.type));
+  }
+  if($3.type =='r' || ($3.type == 'a' && $3.atype.type == 'r')){
+    sprintf(tac[tac_i++], "%s := %f\n", $1.name, $3.value);
+  } else {
+    sprintf(tac[tac_i++], "%s := %d\n", $1.name, (int)$3.value);
   }
   if($1.type!='a'){
     updateSymbolTable($1.name, $3.value, $3.value);
@@ -318,7 +344,7 @@ stmnt: WRITE '(' write ')' ';' {
     trienode* entry = getSymbolTableNode($1.name);
     if (entry != NULL){
       if($1.atype.first > entry->value.avalue.last){
-        printf("Line %d: Semantic Error: Array out-of-bounds access: %s", line_no, $1.name);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Array out-of-bounds access: %s", line_no, $1.name);
       } else {
       if($3.atype.type == 'r')
         ((float*)entry->value.avalue.array)[$1.atype.first - entry->value.avalue.first] = (float)$3.value;
@@ -347,45 +373,87 @@ write: write2{
 }
 | STRING{
   $$.nd = mknode(NULL, NULL, $1.name);
+  sprintf(tac[tac_i++], "WRITE %s\n", $1.name);
 }
 ;
 write2: aopvalue ',' write2{
   $$.nd = mknode($1.nd, $3.nd, "var_list");
+  sprintf(tac[tac_i++], "WRITE %s\n", $1.name);
 }
 | aopvalue{
   $$.nd = $1.nd;
+  sprintf(tac[tac_i++], "WRITE %s\n", $1.name);
 }
 ;
 
-fr: ID ASSIGNMENT_OPERATOR operation TO operation DO block_begin{
+fr: ID ASSIGNMENT_OPERATOR operation TO operation DO {
   if($1.type != $3.type){
-    printf("Line %d: Semantic Error: Type Mismatch: %s", line_no, $1.name);
-    printf(" of type: "); printType($1.type); printf(" is being assigned value of type: "); printType($3.type); printf("\n");
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($3.type));
   }
-  if($3.type != $5.type){
-    printf("Line %d: Semantic Error: Type Mismatch - For: first expression", line_no);
-    printf(" of type: "); printType($1.type); printf(" second expression of type: "); printType($3.type); printf("\n");
+  if($1.type != $5.type){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($5.type));
+  }
+  if($3.type =='r'){
+    sprintf(tac[tac_i++], "%s := %f\n", $1.name, $3.value);
+    sprintf($<sname>$.if_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+    sprintf($<sname>$.else_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nif (%s > %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
+  } else {
+    sprintf(tac[tac_i++], "%s := %d\n", $1.name, (int)$3.value);
+    sprintf($<sname>$.if_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+    sprintf($<sname>$.else_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nif (%s > %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
   }
   updateSymbolTable($1.name, $3.value, $3.value);
-  $$.nd = mknode(mknode(mknode(mknode(NULL, NULL, $1.name), $3.nd, ":="), $5.nd,"range_upto"), $7.nd, "for");
+} block_begin {
+  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>7.if_body);
+	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>7.else_body);
+  $$.nd = mknode(mknode(mknode(mknode(NULL, NULL, $1.name), $3.nd, ":="), $5.nd,"range_upto"), $8.nd, "for");
 }
-| ID ASSIGNMENT_OPERATOR operation DOWNTO operation DO block_begin{
+| ID ASSIGNMENT_OPERATOR operation DOWNTO operation DO {
   if($1.type != $3.type){
-    printf("Line %d: Semantic Error: Type Mismatch: %s", line_no, $1.name);
-    printf(" of type: "); printType($1.type); printf(" is being assigned value of type: "); printType($3.type); printf("\n");
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($5.type));
   }
-  if($3.type != $5.type){
-    printf("Line %d: Semantic Error: Type Mismatch - For: first expression", line_no);
-    printf(" of type: "); printType($1.type); printf(" second expression of type: "); printType($3.type); printf("\n");
+  if($1.type != $5.type){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($3.type));
+  }
+  if($3.type =='r'){
+    sprintf(tac[tac_i++], "%s := %f\n", $1.name, $3.value);
+    sprintf($<sname>$.if_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+    sprintf($<sname>$.else_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nif (%s < %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
+  } else {
+    sprintf(tac[tac_i++], "%s := %d\n", $1.name, (int)($3.value));
+    sprintf($<sname>$.if_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+    sprintf($<sname>$.else_body, "L%d", label_i++);
+    sprintf(tac[tac_i++], "\nif (%s < %f) GOTO %s\n", $1.name, $5.value, $<sname>$.else_body);
   }
   updateSymbolTable($1.name, $3.value, $3.value);
-  $$.nd = mknode(mknode(mknode(mknode(NULL, NULL, $1.name), $3.nd, ":="), $5.nd,"range_downto"), $7.nd, "for");
+} block_begin {
+  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>7.if_body);
+	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>7.else_body);
+  $$.nd = mknode(mknode(mknode(mknode(NULL, NULL, $1.name), $3.nd, ":="), $5.nd,"range_downto"), $8.nd, "for");
 };
-while: operation DO block_begin {
+while: operation DO {
   if($1.type != 'b'){
-    printf("Line %d: Semantic Error: Type Mismatch - While: condition is not a boolean expression\n", line_no);
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - While: condition is not a boolean expression\n", line_no);
   }
-  $$.nd = mknode($1.nd, $3.nd, "while");
+  sprintf($<sname>$.if_body, "L%d", label_i++);
+  sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+  sprintf($<sname>$.else_body, "L%d", label_i++);
+  if($1.type =='r'){
+    sprintf(tac[tac_i++], "\nif NOT (%f) GOTO %s\n", $1.value, $<sname>$.else_body);
+  } else {
+    sprintf(tac[tac_i++], "\nif NOT (%d) GOTO %s\n", (int)$1.value, $<sname>$.else_body);
+  }
+} block_begin {
+  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>3.if_body);
+	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>3.else_body);
+  $$.nd = mknode($1.nd, $4.nd, "while");
 };
 
 opvalue: ID{
@@ -395,10 +463,10 @@ opvalue: ID{
   if(entry != NULL){
     $$.type = entry->type;
     if(entry->type == 'a'){
-      printf("Line %d: Semantic Error: Type Mismatch - Arrays cannot be used without [] operator\n", line_no);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Arrays cannot be used without [] operator\n", line_no);
     } else {
       if(!entry->isInitialized){
-        printf("Line %d: Semantic Error: Uninitialized Variable: %s\n", line_no, $1.name);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Uninitialized Variable: %s\n", line_no, $1.name);
       } else {
         $$.value = (entry->type == 'a') ? entry->value.rvalue : entry->value.nrvalue;
       }
@@ -424,17 +492,17 @@ opvalue: ID{
 | ID '[' operation ']' {
   trienode* entry = getSymbolTableNode($1.name);
   if($3.type != 'i'){
-    printf("Line %d: Semantic Error: Type Mismatch - Only integer can be used for array access\n", line_no);
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only integer can be used for array access\n", line_no);
   }
   $$.value = 0;
   $$.type = 'i';
   if(entry != NULL){
     if(entry->type != 'a')
-      printf("Line %d: Semantic Error: Type Mismatch - Cannot apply [] operator to variables which are not arrays\n", line_no);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Cannot apply [] operator to variables which are not arrays\n", line_no);
     else {
       $$.type = entry->value.avalue.type;
       if($3.value > entry->value.avalue.last){
-        printf("Line %d: Semantic Error: Array out-of-bounds access: %s", line_no, $1.name);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Array out-of-bounds access: %s", line_no, $1.name);
       } else {
         if($$.type == 'r')
           $$.value = ((float*)entry->value.avalue.array)[(int)$3.value - entry->value.avalue.first];
@@ -452,22 +520,22 @@ aopvalue: ID {
   if(entry != NULL){
     $$.type = entry->type;
     if(entry->type == 'a'){
-      printf("Line %d: Semantic Error: Type Mismatch - Arrays can only be used with [] operator\n", line_no);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Arrays can only be used with [] operator\n", line_no);
     }
   }
   $$.nd = mknode(NULL, NULL, $1.name);
 }
 | ID '[' operation ']' {
-  strcpy($$.name, $1.name);
   trienode* entry = getSymbolTableNode($1.name);
   $$.type = 'a';
   $$.atype.type = 'i';
   if($3.type == 'r'){
-    printf("Line %d: Semantic Error: Type Mismatch - Real values cannot be used for array access\n", line_no);
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Real values cannot be used for array access\n", line_no);
   }
+  sprintf($$.name, "%s[%d]", $1.name, (int)$3.value);
   if(entry != NULL){
     if(entry->type != 'a'){
-      printf("Line %d: Semantic Error: Type Mismatch - Only arrays can be used with the [] operator\n", line_no);
+      sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only arrays can be used with the [] operator\n", line_no);
     } else {
       $$.atype = entry->value.avalue;
     }
@@ -481,45 +549,45 @@ operation: operation bin_operator operation{
     case 0:
       $$.value = $1.value + $3.value;
       if($1.type != $3.type){
-        printf("Line %d: Semantic Error: Type Mismatch: ", line_no);
-        printf(" of type: "); printType($1.type); printf(" is being added to value of type: "); printType($3.type); printf("\n");
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
       }
       break;
     case 1:
       $$.value = $1.value - $3.value;
       if($1.type != $3.type){
-        printf("Line %d: Semantic Error: Type Mismatch: ", line_no);
-        printf(" of type: "); printType($1.type); printf(" is being subtracted from a value of type: "); printType($3.type); printf("\n");
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
       }
       break;
     case 2:
       $$.value = $1.value * $3.value;
       if($1.type != $3.type){
-        printf("Line %d: Semantic Error: Type Mismatch: ", line_no);
-        printf(" of type: "); printType($1.type); printf(" is being multiplied to value of type: "); printType($3.type); printf("\n");
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: *  between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
       }
       break;
     case 3:
+      if($3.value == 0){
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Division by zero\n", line_no);
+      }
       $$.value = (float)$1.value / (float)$3.value;
       $$.type = 'r';
       break;
     case 4:
       if($1.type != 'i' || $3.type != 'i'){
-        printf("Line %d: Semantic Error: Only integer variables can be used with %%\n", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Only integer variables can be used with %%\n", line_no);
       }
       $$.value = (int)$1.value % (int)$3.value;
       $$.type = 'i';
       break;
     case 5:
       if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        printf("Line %d: Semantic Error: AND both value must be boolean (1 and 0)", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: AND both value must be boolean (1 and 0)", line_no);
       }
       $$.value = $1.value && $3.value;
       $$.type = 'b';
       break;
     case 6:
       if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        printf("Line %d: Semantic Error: OR both value must be boolean (1 and 0)\n", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: OR both value must be boolean (1 and 0)\n", line_no);
       }
       $$.value = $1.value || $3.value;
       $$.type = 'b';
@@ -530,14 +598,14 @@ operation: operation bin_operator operation{
       break;
     case 8:
       if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        printf("Line %d: Semantic Error: >= Not applicable on boolean operands\n", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: >= Not applicable on boolean operands\n", line_no);
       }
       $$.value = ($1.value >= $3.value);
       $$.type = 'b';
       break;
     case 9:
       if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        printf("Line %d: Semantic Error: <= Not applicable on boolean operands\n", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: <= Not applicable on boolean operands\n", line_no);
       }
       $$.value = ($1.value <= $3.value);
       $$.type = 'b';
@@ -548,14 +616,14 @@ operation: operation bin_operator operation{
       break;
     case 11:
       if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        printf("Line %d: Semantic Error: < Not applicable on boolean operands\n", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: < Not applicable on boolean operands\n", line_no);
       }
       $$.value = ($1.value < $3.value);
       $$.type = 'b';
       break;
     case 12:
       if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        printf("Line %d: Semantic Error: > Not applicable on boolean operands\n", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: > Not applicable on boolean operands\n", line_no);
       }
       $$.value = ($1.value > $3.value);
       $$.type = 'b';
@@ -563,12 +631,12 @@ operation: operation bin_operator operation{
     default:
       printf("FFF");
   }
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | '(' operation ')'{
-  $$.type = $2.type;
-  $$.value = $2.value;
-  $$.nd = $2.nd;
+  $$ = $2;
 }
 | opvalue {
   $$.type = $1.type;
@@ -587,12 +655,14 @@ operation: operation bin_operator operation{
       break;
     default:
       if($1.value == 0 || $1.value == 1){
-        printf("Line %d: Semantic Error: NOT - value must be boolean (0 or 1)", line_no);
+        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: NOT - value must be boolean (0 or 1)", line_no);
       }
       $$.value = ($2.value != 0) ? 1: 0;
       $$.type = 'b';
       break;
   }
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s\n", $$.name, $1.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, $1.name);
 };
 bin_operator: PLUS{
@@ -653,11 +723,23 @@ unary_operator: NOT
 | PLUS %prec MUL
 ;
 
-if: operation THEN block_begin else{
+if: operation THEN {
   if($1.type != 'b'){
-    printf("Line %d: Semantic Error: Type Mismatch - If: condition is not a boolean expression\n", line_no);
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - If: condition is not a boolean expression\n", line_no);
   }
-  $$.nd = mknode($1.nd, mknode($3.nd, $4.nd, "then"), "if");
+  sprintf($<sname>$.else_body, "L%d", label_i++);
+  sprintf($<sname>$.if_body, "L%d", label_i++);
+  if($1.type =='r'){
+    sprintf(tac[tac_i++], "\nif NOT (%f) GOTO %s\n", $1.value, $<sname>$.else_body);
+  } else {
+    sprintf(tac[tac_i++], "\nif NOT (%d) GOTO %s\n", (int)$1.value, $<sname>$.else_body);
+  }
+} block_begin {
+  sprintf(tac[tac_i++], "JUMP to %s\n", $<sname>3.if_body);
+  sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>3.else_body);
+} else {
+  sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>3.if_body);
+  $$.nd = mknode($1.nd, mknode($4.nd, $6.nd, "then"), "if");
 };
 
 else: ELSE block_begin ';'{
@@ -678,13 +760,24 @@ int main() {
   memset(symboltable, 0, 27);
   list_vars_i = 0;
   yyparse();
-  /* printSyntaxTree(syntaxroot); */
-  ex(syntaxroot);
+
+  // Print Syntax Tree
+  FILE* f = fopen("syntaxtree.txt", "w");
+  printSyntaxTree(f, syntaxroot);
+  /* ex(syntaxroot); */
   printf("\n");
-  char f[127];
-  memset(f, 0, sizeof(char));
-  printSymbolTable(0, symboltable, f);
+
+  // Print Symbol Table
+  char title[300];
+  memset(title, 0, sizeof(char));
+  printSymbolTable(0, symboltable, title);
   printf("------------------------------\n");
   freeSymbolTable(symboltable);
+  
+  // Print TAC
+  printTAC();
+
+  // Print Semantic Errors
+  printSErrors();
   return 0;
 }

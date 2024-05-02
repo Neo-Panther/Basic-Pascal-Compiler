@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "extra.h"
-#include "y.tab.h"
+#include "pascal.tab.h"
 int line_no=1;
 %}
 
