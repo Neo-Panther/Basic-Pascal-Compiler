@@ -756,24 +756,8 @@ int main() {
   memset(symboltable, 0, 27);
   list_vars_i = 0;
   yyparse();
-
-  // Print Syntax Tree
-  FILE* f = fopen("syntaxtree.txt", "w");
-  printSyntaxTree(f, syntaxroot);
-  /* ex(syntaxroot); */
-  printf("\n");
-
-  // Print Symbol Table
-  char title[300];
-  memset(title, 0, sizeof(char));
-  printSymbolTable(0, symboltable, title);
-  printf("------------------------------\n");
-  freeSymbolTable(symboltable);
   
   // Print TAC
   printTAC();
-
-  // Print Semantic Errors
-  printSErrors();
   return 0;
 }

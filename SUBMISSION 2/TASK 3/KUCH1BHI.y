@@ -223,7 +223,6 @@ Start: PROGRAM ID ';' VAR var_section block_begin '.'{
   $4.nd = mknode($5.nd, $6.nd, "var");
   $$.nd = mknode(mknode(NULL, NULL, $2.name), $4.nd, "program");
   syntaxroot = $$.nd;
-  printf("valid input\n");
   return 0;
 };
 
@@ -760,18 +759,7 @@ int main() {
   // Print Syntax Tree
   FILE* f = fopen("syntaxtree.txt", "w");
   printSyntaxTree(f, syntaxroot);
-  /* ex(syntaxroot); */
   printf("\n");
-
-  // Print Symbol Table
-  char title[300];
-  memset(title, 0, sizeof(char));
-  printSymbolTable(0, symboltable, title);
-  printf("------------------------------\n");
-  freeSymbolTable(symboltable);
-  
-  // Print TAC
-  printTAC();
 
   // Print Semantic Errors
   printSErrors();
