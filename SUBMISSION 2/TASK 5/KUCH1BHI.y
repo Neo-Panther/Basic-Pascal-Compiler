@@ -105,12 +105,21 @@
     }
     return cnode;
   }
-  char* getType(char type){
+  char* getTypeC(char type){
     switch(type){
       case 'i': return "int";
       case 'b': return "bool";
       case 'c': return "char";
       case 'r': return "float";
+      default: return "-unknown-";
+    }
+  }
+  char *getTypePascal(char type){
+    switch(type){
+      case 'i': return "integer";
+      case 'b': return "boolean";
+      case 'c': return "char";
+      case 'r': return "real";
       case 'a': return "array";
       default: return "-unknown-";
     }
@@ -134,7 +143,7 @@
           } else if(cnodes[i]->type == 'b'){
             printf("%s         BOOLEAN          %d", current_name, cnodes[i]->value.nrvalue);
           } else{
-            printf("::Printing ARRAY %s of Type %s::\n", current_name, getType(cnodes[i]->value.avalue.type));
+            printf("::Printing ARRAY %s of Type %s::\n", current_name, getTypeC(cnodes[i]->value.avalue.type));
             printf("Index                 Value\n");
             for(int j = cnodes[i]->value.avalue.first; j < cnodes[i]->value.avalue.last; j++){
               if(cnodes[i]->value.avalue.type == 'c'){
@@ -225,6 +234,7 @@ Start: PROGRAM ID ';' VAR var_section block_begin '.'{
   addToSymbolTable($2.name);
   list_vars[0]->type = 'p';
   list_vars_i = 0;
+  strcpy(allNames[allNames_i++], $2.name);
   $4.nd = mknode($5.nd, $6.nd, "var");
   $$.nd = mknode(mknode(NULL, NULL, $2.name), $4.nd, "program");
   syntaxroot = $$.nd;
@@ -243,8 +253,8 @@ definition: var_list ':' stype ';'{
   for(int i = 0; i < list_vars_i; i++){
     list_vars[i]->type = $3.type;
     if($3.type == 'a'){
-      sprintf(tac[tac_i++], "%s: %d..%d | %s\n", names[i], $3.atype.first, $3.atype.last, getType($3.atype.type));
-      fprintf(f, "%s %s[%d];\n", getType($3.atype.type), names[i], $3.atype.last-$3.atype.first+1);
+      sprintf(tac[tac_i++], "%s: %d..%d | %s\n", names[i], $3.atype.first, $3.atype.last, getTypeC($3.atype.type));
+      fprintf(f, "%s %s[%d];\n", getTypeC($3.atype.type), names[i], $3.atype.last-$3.atype.first+1);
       list_vars[i]->value.avalue.first = $3.atype.first;
       list_vars[i]->value.avalue.last = $3.atype.last;
       list_vars[i]->value.avalue.type = $3.atype.type;
@@ -254,8 +264,8 @@ definition: var_list ':' stype ';'{
       else
         list_vars[i]->value.avalue.array = calloc($3.atype.last-$3.atype.first+1, sizeof(float));
     } else {
-      fprintf(f, "%s %s;\n", getType($3.type), names[i]);
-      sprintf(tac[tac_i++], "%s : %s\n", names[i], getType($3.type));
+      fprintf(f, "%s %s;\n", getTypeC($3.type), names[i]);
+      sprintf(tac[tac_i++], "%s : %s\n", names[i], getTypeC($3.type));
     }
   }
   list_vars_i = 0;
@@ -355,7 +365,7 @@ stmnt: WRITE '(' write ')' ';' {
   char tp = $1.type;
   if(tp == 'a') tp = $1.atype.type;
   if(tp != $3.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType(tp), getType($3.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getTypeC(tp), getTypeC($3.type));
   }
   sprintf(tac[tac_i++], "%s := %s\n", $1.name, $3.name);
   fprintf(f, "%s = %s;\n", $1.name, $3.name);
@@ -416,10 +426,10 @@ write2: aopvalue ',' write2{
 
 fr: ID ASSIGNMENT_OPERATOR operation TO operation DO {
   if($1.type != $3.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($3.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getTypeC($1.type), getTypeC($3.type));
   }
   if($1.type != $5.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($5.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getTypeC($1.type), getTypeC($5.type));
   }
   sprintf(tac[tac_i++], "%s := %s\n", $1.name, $3.name);
   fprintf(f, "%s = %s;\n", $1.name, $3.name);
@@ -441,10 +451,10 @@ fr: ID ASSIGNMENT_OPERATOR operation TO operation DO {
 }
 | ID ASSIGNMENT_OPERATOR operation DOWNTO operation DO {
   if($1.type != $3.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($5.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getTypeC($1.type), getTypeC($5.type));
   }
   if($1.type != $5.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getType($1.type), getType($3.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: %s  of type: %s is being assigned value of type: %s\n", line_no, $1.name, getTypeC($1.type), getTypeC($3.type));
   }
   sprintf(tac[tac_i++], "%s := %s\n", $1.name, $3.name);
   fprintf(f, "%s = %s;\n", $1.name, $3.name);
@@ -593,11 +603,11 @@ aopvalue: ID {
 operation: operation PLUS operation{
   $$.value = $1.value + $3.value;
   if($1.type != $3.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getTypeC($1.type), getTypeC($3.type));
   }
   sprintf($$.name, "__t%d", temp_var++);
   $$.type = $1.type;
-  fprintf(f, "%s %s;\n", getType($$.type), $$.name);
+  fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s + %s;\n", $$.name, $1.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
@@ -605,11 +615,11 @@ operation: operation PLUS operation{
 | operation MINUS operation{
   $$.value = $1.value - $3.value;
   if($1.type != $3.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getTypeC($1.type), getTypeC($3.type));
   }
   sprintf($$.name, "__t%d", temp_var++);
   $$.type = $1.type;
-  fprintf(f, "%s %s;\n", getType($$.type), $$.name);
+  fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s - %s;\n", $$.name, $1.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
@@ -617,11 +627,11 @@ operation: operation PLUS operation{
 | operation MUL operation{
   $$.value = $1.value * $3.value;
   if($1.type != $3.type){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: * between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: * between type: %s and type: %s\n", line_no, getTypeC($1.type), getTypeC($3.type));
   }
   sprintf($$.name, "__t%d", temp_var++);
   $$.type = $1.type;
-  fprintf(f, "%s %s;\n", getType($$.type), $$.name);
+  fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s * %s;\n", $$.name, $1.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
@@ -750,7 +760,7 @@ operation: operation PLUS operation{
   $$.value = -$2.value;
   $$.type = $2.type;
   sprintf($$.name, "__t%d", temp_var++);
-  fprintf(f, "%s %s;\n", getType($$.type), $$.name);
+  fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := -%s\n", $$.name, $2.name);
   fprintf(f, "%s = -%s;\n", $$.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, "-");
@@ -759,7 +769,7 @@ operation: operation PLUS operation{
   $$.value = $2.value;
   $$.type = $2.type;
   sprintf($$.name, "__t%d", temp_var++);
-  fprintf(f, "%s %s;\n", getType($$.type), $$.name);
+  fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s\n", $$.name, $2.name);
   fprintf(f, "%s = %s;\n", $$.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, "+");
@@ -817,16 +827,84 @@ int main(int argc, char** argv) {
   }
   // Convert to output
   f = fopen("output.c", "w");
-  fprintf(f, "#include <stdio.h>\n#include <stdbool.h>\n int main(void){\n");
+  fprintf(f, "#include <stdio.h>\n#include <stdbool.h>\nint main(void){\n");
   memset(symboltable, 0, 27);
   list_vars_i = 0;
   yyin = fopen(argv[1], "r");
   yyparse();
   fclose(yyin);
+
+  fprintf(f, "FILE* f = fopen(\"symboltable.txt\", \"w\");");
+  for(int i = 0; i < allNames_i - 2; i++){
+    trienode* entry = getSymbolTableNode(allNames[i]);
+    if(entry->type != 'a'){
+      if(entry->type == 'r')
+        fprintf(f, "fprintf(f, \"%%f\\n\", %s);\n", allNames[i]);
+      else if(entry->type == 'c')
+        fprintf(f, "fprintf(f, \"%%c\\n\", %s);\n", allNames[i]);
+      else
+        fprintf(f, "fprintf(f, \"%%d\\n\", %s);\n", allNames[i]);
+    } else {
+      int n = entry->value.avalue.last - entry->value.avalue.first + 1;
+      for(int j = 0; j < n; j++){
+        if(entry->value.avalue.type == 'r')
+          fprintf(f, "fprintf(f, \"%%f\\n\", %s[%d]);\n", allNames[i], j);
+        else if(entry->value.avalue.type == 'c')
+          fprintf(f, "fprintf(f, \"%%c\\n\", %s[%d]);\n", allNames[i], j);
+        else
+          fprintf(f, "fprintf(f, \"%%d\\n\", %s[%d]);\n", allNames[i], j);
+      }
+    }
+  }
+  fprintf(f, "fclose(f);\n");
   fprintf(f, "return 0;\n}");
   fclose(f);
-
   // running compiled command
+  printf("::::Parsing complete Starting Program run::::\n");
   system("gcc output.c -o output.out && ./output.out");
+  printf("::::Program run complete::::\n");
+  f = fopen("symboltable.txt", "r");
+  printf("Printing Symbol Table: %d unique identifiers\n", allNames_i-1);
+  printf("Variable    Type    Value\n");
+  printf("%s      PROGRAM_ID    -\n", allNames[allNames_i-1]);
+  for(int i = 0; i < allNames_i-2; i++){
+    trienode* entry = getSymbolTableNode(allNames[i]);
+    if(entry->type != 'a'){
+      if(entry->type == 'r'){
+        float tmp; fscanf(f, "%f", &tmp);
+        printf("%s      REAL    %f\n", allNames[i], tmp);
+      } else if(entry->type == 'c'){
+        char tmp; fscanf(f, "%c", &tmp); fscanf(f, "%c", &tmp); // to ignore newline character
+        printf("%s      CHAR    %c\n", allNames[i], tmp);
+      } else if(entry->type == 'i') {
+        int tmp; fscanf(f, "%d", &tmp);
+        printf("%s      INTEGER    %d\n", allNames[i], tmp);
+      } else{
+        int tmp; fscanf(f, "%d", &tmp);
+        printf("%s      BOOLEAN    %d\n", allNames[i], tmp);
+      }
+    } else {
+      int n = entry->value.avalue.last - entry->value.avalue.first + 1;
+      printf("::Printing array %s of type %s::\n", allNames[i], getTypePascal(entry->value.avalue.type));
+      for(int j = 0; j < n; j++){
+        if(entry->value.avalue.type == 'r'){
+          float tmp; fscanf(f, "%f", &tmp);
+          printf("%s[%d]      =    %f\n", allNames[i], j, tmp);
+        } else if(entry->value.avalue.type == 'c'){
+          char tmp; fscanf(f, "%c", &tmp); fscanf(f, "%c", &tmp); // to ignore newline character
+          printf("%s[%d]      =    %c\n", allNames[i], j, tmp);
+        } else if(entry->value.avalue.type == 'i') {
+          int tmp; fscanf(f, "%d", &tmp);
+          printf("%s[%d]      =    %d\n", allNames[i], j, tmp);
+        } else {
+          int tmp; fscanf(f, "%d", &tmp);
+          printf("%s[%d]      =    %d\n", allNames[i], j, tmp);
+        }
+      }
+      printf(":::::::::::::::::::::::::::::::\n");
+    }
+  }
+  printf(":::::::::::::::::::::::::::::::\n");
+
   return 0;
 }

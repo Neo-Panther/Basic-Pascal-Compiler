@@ -8,6 +8,7 @@
   #include "extra.h"
   // 300 variable name max length
   int yylex();
+  extern FILE* yyin;
   void yyerror(const char *s);
   extern int line_no;
   int label_i = 0;
@@ -729,11 +730,16 @@ void yyerror(const char* s){
   exit(1);
 }
 
-int main() {
+int main(int argc, char** argv) {
+  if(argc < 2){
+    printf("Usage: %s <filename>\n", argv[0]);
+    return 1;
+  }
   memset(symboltable, 0, 27);
   list_vars_i = 0;
+  yyin = fopen(argv[1], "r");
   yyparse();
-
+  fclose(yyin);
   // Print Syntax Tree
   FILE* f = fopen("syntaxtree.txt", "w");
   printSyntaxTree(f, syntaxroot);

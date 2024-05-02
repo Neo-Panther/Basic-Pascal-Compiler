@@ -7,6 +7,7 @@
   #include<math.h>
   #include "extra.h"
   // 300 variable name max length
+  extern FILE* yyin;
   int yylex();
   void yyerror(const char *s);
   extern int line_no;
@@ -720,10 +721,16 @@ void yyerror(const char* s){
   exit(1);
 }
 
-int main() {
+int main(int argc, char** argv) {
+  if(argc < 2){
+    printf("Usage: %s <filename>\n", argv[0]);
+    return 1;
+  }
+  yyin = fopen(argv[1], "r");
   memset(symboltable, 0, 27);
   list_vars_i = 0;
   yyparse();
+  fclose(yyin);
   freeSymbolTable(symboltable);
   
   // Print TAC
