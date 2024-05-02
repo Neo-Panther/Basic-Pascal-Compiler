@@ -206,7 +206,7 @@
 
 %start Start
 %token <sname> STRING ASSIGNMENT_OPERATOR THEN NOT AND OR GE LE NE TBOOL TINT TREAL TCHAR PROGRAM VAR TO DOWNTO IF ELSE WHILE FOR DO ARRAY BGN END READ WRITE OF ID LREAL LINTEGER LCHAR MUL DIV MOD LT GT MINUS PLUS EQ
-%type <sname> Start var_section definition ntype block_begin block_sup stmnt write fr while opvalue aopvalue operation bin_operator unary_operator if else write2 stype var_list
+%type <sname> Start var_section definition ntype block_begin block_sup stmnt write fr while opvalue aopvalue operation if else write2 stype var_list
 
 %left LE LT NE EQ GE GT
 %left PLUS MINUS OR
@@ -532,7 +532,7 @@ aopvalue: ID {
   if($3.type == 'r'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Real values cannot be used for array access\n", line_no);
   }
-  sprintf($$.name, "%s[%d]", $1.name, (int)$3.value);
+  sprintf($$.name, "%.200s[%d]", $1.name, (int)$3.value);
   if(entry != NULL){
     if(entry->type != 'a'){
       sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only arrays can be used with the [] operator\n", line_no);
@@ -544,93 +544,123 @@ aopvalue: ID {
   $$.nd = mknode(mknode(NULL, NULL, $1.name), $3.nd, "array_access");
 };  ;  // operation values which can be assigned stuff
 
-operation: operation bin_operator operation{
-  switch($2.type){
-    case 0:
-      $$.value = $1.value + $3.value;
-      if($1.type != $3.type){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
-      }
-      break;
-    case 1:
-      $$.value = $1.value - $3.value;
-      if($1.type != $3.type){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
-      }
-      break;
-    case 2:
-      $$.value = $1.value * $3.value;
-      if($1.type != $3.type){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: *  between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
-      }
-      break;
-    case 3:
-      if($3.value == 0){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Division by zero\n", line_no);
-      }
-      $$.value = (float)$1.value / (float)$3.value;
-      $$.type = 'r';
-      break;
-    case 4:
-      if($1.type != 'i' || $3.type != 'i'){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Only integer variables can be used with %%\n", line_no);
-      }
-      $$.value = (int)$1.value % (int)$3.value;
-      $$.type = 'i';
-      break;
-    case 5:
-      if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: AND both value must be boolean (1 and 0)", line_no);
-      }
-      $$.value = $1.value && $3.value;
-      $$.type = 'b';
-      break;
-    case 6:
-      if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: OR both value must be boolean (1 and 0)\n", line_no);
-      }
-      $$.value = $1.value || $3.value;
-      $$.type = 'b';
-      break;
-    case 7:
-      $$.value = $1.value != $3.value;
-      $$.type = 'b';
-      break;
-    case 8:
-      if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: >= Not applicable on boolean operands\n", line_no);
-      }
-      $$.value = ($1.value >= $3.value);
-      $$.type = 'b';
-      break;
-    case 9:
-      if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: <= Not applicable on boolean operands\n", line_no);
-      }
-      $$.value = ($1.value <= $3.value);
-      $$.type = 'b';
-      break;
-    case 10:
-      $$.value = ($1.value == $3.value);
-      $$.type = 'b';
-      break;
-    case 11:
-      if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: < Not applicable on boolean operands\n", line_no);
-      }
-      $$.value = ($1.value < $3.value);
-      $$.type = 'b';
-      break;
-    case 12:
-      if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: > Not applicable on boolean operands\n", line_no);
-      }
-      $$.value = ($1.value > $3.value);
-      $$.type = 'b';
-      break;
-    default:
-      printf("FFF");
+operation: operation PLUS operation{
+  $$.value = $1.value + $3.value;
+  if($1.type != $3.type){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
   }
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation MINUS operation{
+  $$.value = $1.value - $3.value;
+  if($1.type != $3.type){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
+  }
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation MUL operation{
+  $$.value = $1.value * $3.value;
+  if($1.type != $3.type){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: * between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
+  }
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation DIV operation{
+  if($3.value == 0){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Division by zero\n", line_no);
+  }
+  $$.value = (float)$1.value / (float)$3.value;
+  $$.type = 'r';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation MOD operation{
+  if($1.type != 'i' || $3.type != 'i'){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Only integer variables can be used with %%\n", line_no);
+  }
+  $$.value = (int)$1.value % (int)$3.value;
+  $$.type = 'i';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation AND operation{
+  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: AND both value must be boolean (1 and 0)", line_no);
+  }
+  $$.value = $1.value && $3.value;
+  $$.type = 'b';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation OR operation{
+  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: OR both value must be boolean (1 and 0)\n", line_no);
+  }
+  $$.value = $1.value || $3.value;
+  $$.type = 'b';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation NE operation{
+  $$.value = $1.value != $3.value;
+  $$.type = 'b';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation GE operation{
+  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: >= Not applicable on boolean operands\n", line_no);
+  }
+  $$.value = ($1.value >= $3.value);
+  $$.type = 'b';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation LE operation{
+  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: <= Not applicable on boolean operands\n", line_no);
+  }
+  $$.value = ($1.value <= $3.value);
+  $$.type = 'b';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation EQ operation{
+  $$.value = ($1.value == $3.value);
+  $$.type = 'b';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation LT operation{
+  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: < Not applicable on boolean operands\n", line_no);
+  }
+  $$.value = ($1.value < $3.value);
+  $$.type = 'b';
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
+  $$.nd = mknode($1.nd, $3.nd, $2.name);
+}
+| operation GT operation{
+  if(($3.value == 0 || $3.value == 1) && ($1.value == 0|| $1.value == 1)){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: > Not applicable on boolean operands\n", line_no);
+  }
+  $$.value = ($1.value > $3.value);
+  $$.type = 'b';
   sprintf($$.name, "t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
@@ -643,85 +673,33 @@ operation: operation bin_operator operation{
   $$.value = $1.value;
   $$.nd = $1.nd;
 }
-| unary_operator operation{
-  switch($1.name[0]){
-    case '-':
-      $$.value = -$2.value;
-      $$.type = $2.type;
-      break;
-    case '+':
-      $$.value = -$2.value;
-      $$.type = $2.type;
-      break;
-    default:
-      if($1.value == 0 || $1.value == 1){
-        sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: NOT - value must be boolean (0 or 1)", line_no);
-      }
-      $$.value = ($2.value != 0) ? 1: 0;
-      $$.type = 'b';
-      break;
+| '-' operation {
+  if($2.type != 'i' && $2.type != 'r'){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: '-' - value must be real or integer", line_no);
   }
+  $$.value = -$2.value;
+  $$.type = $2.type;
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := -%s\n", $$.name, $2.name);
+  $$.nd = mknode(NULL, $2.nd, "-");
+} %prec MUL
+| '+' operation {
+  $$.value = $2.value;
+  $$.type = $2.type;
+  sprintf($$.name, "t%d", temp_var++);
+  sprintf(tac[tac_i++], "%s := %s\n", $$.name, $2.name);
+  $$.nd = mknode(NULL, $2.nd, "+");
+} %prec MUL
+| NOT operation {
+  if($2.value == 0 || $2.value == 1){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: NOT - value must be boolean (0 or 1)", line_no);
+  }
+  $$.value = ($2.value != 0) ? 1: 0;
+  $$.type = 'b';
   sprintf($$.name, "t%d", temp_var++);
   sprintf(tac[tac_i++], "%s := %s %s\n", $$.name, $1.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, $1.name);
 };
-bin_operator: PLUS{
-  strcpy($$.name, $1.name);
-  $$.type = 0;
-}
-| MINUS{
-  strcpy($$.name, $1.name);
-  $$.type = 1;
-}
-| MUL{
-  strcpy($$.name, $1.name);
-  $$.type = 2;
-}
-| DIV{
-  strcpy($$.name, $1.name);
-  $$.type = 3;
-}
-| MOD{
-  strcpy($$.name, $1.name);
-  $$.type = 4;
-}
-| AND{
-  strcpy($$.name, $1.name);
-  $$.type = 5;
-}
-| OR{
-  strcpy($$.name, $1.name);
-  $$.type = 6;
-}
-| NE{
-  strcpy($$.name, $1.name);
-  $$.type = 7;
-}
-| GE{
-  strcpy($$.name, $1.name);
-  $$.type = 8;
-}
-| LE{
-  strcpy($$.name, $1.name);
-  $$.type = 9;
-}
-| EQ{
-  strcpy($$.name, $1.name);
-  $$.type = 10;
-}
-| LT{
-  strcpy($$.name, $1.name);
-  $$.type = 11;
-}
-| GT{
-  strcpy($$.name, $1.name);
-  $$.type = 12;
-}
-;
-unary_operator: NOT
-| MINUS %prec MUL
-| PLUS %prec MUL
-;
 
 if: operation THEN {
   if($1.type != 'b'){
@@ -752,7 +730,7 @@ else: ELSE block_begin ';'{
 %%
 
 void yyerror(const char* s){
-  printf("syntax error: %s: line no.: %d\n", s, line_no);
+  printf("%s: line no.: %d\n", s, line_no);
   exit(1);
 }
 
