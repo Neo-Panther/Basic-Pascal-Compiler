@@ -223,7 +223,6 @@ Start: PROGRAM ID ';' VAR var_section block_begin '.'{
   $4.nd = mknode($5.nd, $6.nd, "var");
   $$.nd = mknode(mknode(NULL, NULL, $2.name), $4.nd, "program");
   syntaxroot = $$.nd;
-  printf("valid input\n");
   return 0;
 };
 
@@ -239,7 +238,7 @@ definition: var_list ':' stype ';'{
   for(int i = 0; i < list_vars_i; i++){
     list_vars[i]->type = $3.type;
     if($3.type == 'a'){
-      sprintf(tac[tac_i++], "%s: %d > %s\n", names[i], $3.atype.last - $3.atype.first, getType($3.type));
+      sprintf(tac[tac_i++], "%s: %d..%d | %s\n", names[i], $3.atype.first, $3.atype.last, getType($3.atype.type));
       list_vars[i]->value.avalue.first = $3.atype.first;
       list_vars[i]->value.avalue.last = $3.atype.last;
       list_vars[i]->value.avalue.type = $3.atype.type;
@@ -418,18 +417,19 @@ fr: ID ASSIGNMENT_OPERATOR operation TO operation DO {
 	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>7.else_body);
   $$.nd = mknode(mknode(mknode(mknode(NULL, NULL, $1.name), $3.nd, ":="), $5.nd,"range_downto"), $8.nd, "for");
 };
-while: operation DO {
-  if($1.type != 'b'){
-    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - While: condition is not a boolean expression\n", line_no);
-  }
+while: {
   sprintf($<sname>$.if_body, "L%d", label_i++);
   sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>$.if_body);
+} operation DO {
+  if($2.type != 'b'){
+    sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - While: condition is not a boolean expression\n", line_no);
+  }
   sprintf($<sname>$.else_body, "L%d", label_i++);
-  sprintf(tac[tac_i++], "\nif NOT (%s) GOTO %s\n", $1.name, $<sname>$.else_body);
+  sprintf(tac[tac_i++], "\nif NOT (%s) GOTO %s\n", $2.name, $<sname>$.else_body);
 } block_begin {
-  sprintf(tac[tac_i++], "GOTO %s\n", $<sname>3.if_body);
-	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>3.else_body);
-  $$.nd = mknode($1.nd, $4.nd, "while");
+  sprintf(tac[tac_i++], "GOTO %s\n", $<sname>1.if_body);
+	sprintf(tac[tac_i++], "\nLABEL %s:\n", $<sname>4.else_body);
+  $$.nd = mknode($2.nd, $5.nd, "while");
 };
 
 opvalue: ID{
@@ -721,27 +721,13 @@ void yyerror(const char* s){
 }
 
 int main() {
+  f = fopen("output.c", "w");
   memset(symboltable, 0, 27);
   list_vars_i = 0;
   yyparse();
 
-  // Print Syntax Tree
-  FILE* f = fopen("syntaxtree.txt", "w");
-  printSyntaxTree(f, syntaxroot);
+  // Convert to output
   fclose(f);
-  printf("\n");
 
-  // Print Symbol Table
-  char title[300];
-  memset(title, 0, sizeof(char));
-  printSymbolTable(0, symboltable, title);
-  printf("------------------------------\n");
-  freeSymbolTable(symboltable);
-  
-  // Print TAC
-  printTAC();
-
-  // Print Semantic Errors
-  printSErrors();
   return 0;
 }

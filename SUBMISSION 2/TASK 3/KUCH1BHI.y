@@ -551,6 +551,7 @@ operation: operation PLUS operation{
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
   }
   sprintf($$.name, "$t%d", temp_var++);
+  $$.type = $1.type;
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
@@ -560,6 +561,7 @@ operation: operation PLUS operation{
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
   }
   sprintf($$.name, "$t%d", temp_var++);
+  $$.type = $1.type;
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
@@ -569,6 +571,7 @@ operation: operation PLUS operation{
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: * between type: %s and type: %s\n", line_no, getType($1.type), getType($3.type));
   }
   sprintf($$.name, "$t%d", temp_var++);
+  $$.type = $1.type;
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
