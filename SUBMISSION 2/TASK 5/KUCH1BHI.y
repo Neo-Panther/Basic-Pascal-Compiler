@@ -4,7 +4,6 @@
   #include<stdlib.h>
   #include<ctype.h>
   #include<stdbool.h>
-  #include<math.h>
   #include "extra.h"
   // 300 variable name max length
   FILE* f;
@@ -44,20 +43,17 @@
   binarynode* syntaxroot;
   // Type, avalue has to be set separately
   void addToSymbolTable(char* name){
-    bool newv = false;
     if(symboltable[calcValue(name[0])] == (trienode*)0){
-      newv = true;
       symboltable[calcValue(name[0])] = (trienode*)calloc(1, sizeof(trienode));
     }
     trienode* cnode = symboltable[calcValue(name[0])];
     for(int i = 1; i < strlen(name); i += 1){
       if(cnode->children[calcValue(name[i])] == (trienode*)0){
-        newv = true;
         cnode->children[calcValue(name[i])] = (trienode*)calloc(1, sizeof(trienode));
       }
       cnode = cnode->children[calcValue(name[i])];
     }
-    if(!newv){
+    if(cnode->isValid){
       sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Multiple declarations of the variable: %s\n", line_no, name);
       return;
     }
@@ -182,15 +178,20 @@
     return new_node;
   }
   float getRealValue(char* name){
-    int num = atoi(name);
-    int numlen;
-    if(num == 0) numlen = 0;
-    else numlen = round(log(num)/log(10.0));
-    int den = atoi(name+2+numlen);
-    int denlen;
-    if(num == 0) denlen = 0;
-    else denlen = strlen(name)-2-numlen;
-    return (float)num+((float)den/(float)pow(10.0, denlen));
+    float num = (float)atoi(name);
+    int numlen = 0;
+    int num2 = num;
+    while(num2>0){
+      num2 /= 10;
+      numlen++;
+    }
+    if(num == 0) numlen = 1;
+    float den = (float)atoi(name+1+numlen);
+    int denlen = strlen(name)-1-numlen;
+    for(int i = 0; i < denlen; i++){
+      den /= 10.0;
+    }
+    return num + den;
   }
   void printSErrors(){
     printf("Number of Semantic Errors: %d\n", s_errors_i);
@@ -546,7 +547,7 @@ opvalue: ID{
   $$.value = 0;
   $$.type = 'i';
   if(entry != NULL){
-    sprintf($$.name, "%.130s[%.100s - %d]", $1.name, $3.name, entry->value.avalue.first);
+    sprintf($$.name, "%.130s[%.100s - (%d)]", $1.name, $3.name, entry->value.avalue.first);
     if(entry->type != 'a')
       sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Cannot apply [] operator to variables which are not arrays\n", line_no);
     else {
@@ -587,7 +588,7 @@ aopvalue: ID {
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only integer values can be used for array access\n", line_no);
   }
   if(entry != NULL){
-    sprintf($$.name, "%.130s[%.100s - %d]", $1.name, $3.name, entry->value.avalue.first);
+    sprintf($$.name, "%.130s[%.100s - (%d)]", $1.name, $3.name, entry->value.avalue.first);
     if(entry->type != 'a'){
       sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch - Only arrays can be used with the [] operator\n", line_no);
     } else {
@@ -605,7 +606,7 @@ operation: operation PLUS operation{
   if($1.type != $3.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: + between type: %s and type: %s\n", line_no, getTypeC($1.type), getTypeC($3.type));
   }
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   $$.type = $1.type;
   fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
@@ -617,7 +618,7 @@ operation: operation PLUS operation{
   if($1.type != $3.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: - between type: %s and type: %s\n", line_no, getTypeC($1.type), getTypeC($3.type));
   }
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   $$.type = $1.type;
   fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
@@ -629,7 +630,7 @@ operation: operation PLUS operation{
   if($1.type != $3.type){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Type Mismatch: * between type: %s and type: %s\n", line_no, getTypeC($1.type), getTypeC($3.type));
   }
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   $$.type = $1.type;
   fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
@@ -638,10 +639,10 @@ operation: operation PLUS operation{
 }
 | operation DIV operation{
   $$.type = 'r';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "float %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
-  fprintf(f, "%s = %s / %s;\n", $$.name, $1.name, $3.name);
+  fprintf(f, "%s = (float)%s / (float)%s;\n", $$.name, $1.name, $3.name);
   $$.nd = mknode($1.nd, $3.nd, $2.name);
 }
 | operation MOD operation{
@@ -650,7 +651,7 @@ operation: operation PLUS operation{
   }
   $$.value = (int)$1.value % (int)$3.value;
   $$.type = 'i';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "int %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s %% %s;\n", $$.name, $1.name, $3.name);
@@ -662,7 +663,7 @@ operation: operation PLUS operation{
   }
   $$.value = $1.value && $3.value;
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s && %s;\n", $$.name, $1.name, $3.name);
@@ -674,7 +675,7 @@ operation: operation PLUS operation{
   }
   $$.value = $1.value || $3.value;
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s || %s;\n", $$.name, $1.name, $3.name);
@@ -683,7 +684,7 @@ operation: operation PLUS operation{
 | operation NE operation{
   $$.value = $1.value != $3.value;
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s != %s;\n", $$.name, $1.name, $3.name);
@@ -695,7 +696,7 @@ operation: operation PLUS operation{
   }
   $$.value = ($1.value >= $3.value);
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s >= %s;\n", $$.name, $1.name, $3.name);
@@ -707,7 +708,7 @@ operation: operation PLUS operation{
   }
   $$.value = ($1.value <= $3.value);
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s <= %s;\n", $$.name, $1.name, $3.name);
@@ -716,7 +717,7 @@ operation: operation PLUS operation{
 | operation EQ operation{
   $$.value = ($1.value == $3.value);
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s == %s;\n", $$.name, $1.name, $3.name);
@@ -728,7 +729,7 @@ operation: operation PLUS operation{
   }
   $$.value = ($1.value < $3.value);
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s < %s;\n", $$.name, $1.name, $3.name);
@@ -740,7 +741,7 @@ operation: operation PLUS operation{
   }
   $$.value = ($1.value > $3.value);
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s %s\n", $$.name, $1.name, $2.name, $3.name);
   fprintf(f, "%s = %s > %s;\n", $$.name, $1.name, $3.name);
@@ -753,22 +754,22 @@ operation: operation PLUS operation{
 | opvalue {
   $$ = $1;
 }
-| '-' operation {
+| MINUS operation {
   if($2.type != 'i' && $2.type != 'r'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: '-' - value must be real or integer", line_no);
   }
   $$.value = -$2.value;
   $$.type = $2.type;
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := -%s\n", $$.name, $2.name);
   fprintf(f, "%s = -%s;\n", $$.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, "-");
 } %prec MUL
-| '+' operation {
+| PLUS operation {
   $$.value = $2.value;
   $$.type = $2.type;
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "%s %s;\n", getTypeC($$.type), $$.name);
   sprintf(tac[tac_i++], "%s := %s\n", $$.name, $2.name);
   fprintf(f, "%s = %s;\n", $$.name, $2.name);
@@ -780,7 +781,7 @@ operation: operation PLUS operation{
   }
   $$.value = ($2.value != 0) ? 1: 0;
   $$.type = 'b';
-  sprintf($$.name, "__t%d", temp_var++);
+  sprintf($$.name, "___t%d", temp_var++);
   fprintf(f, "bool %s;\n", $$.name);
   sprintf(tac[tac_i++], "%s := %s %s\n", $$.name, $1.name, $2.name);
   fprintf(f, "%s = !%s;\n", $$.name, $2.name);
@@ -889,16 +890,16 @@ int main(int argc, char** argv) {
       for(int j = 0; j < n; j++){
         if(entry->value.avalue.type == 'r'){
           float tmp; fscanf(f, "%f", &tmp);
-          printf("%s[%d]      =    %f\n", allNames[i], j, tmp);
+          printf("%s[%d]      =    %f\n", allNames[i], j + entry->value.avalue.first, tmp);
         } else if(entry->value.avalue.type == 'c'){
           char tmp; fscanf(f, "%c", &tmp); fscanf(f, "%c", &tmp); // to ignore newline character
-          printf("%s[%d]      =    %c\n", allNames[i], j, tmp);
+          printf("%s[%d]      =    %c\n", allNames[i], j + entry->value.avalue.first, tmp);
         } else if(entry->value.avalue.type == 'i') {
           int tmp; fscanf(f, "%d", &tmp);
-          printf("%s[%d]      =    %d\n", allNames[i], j, tmp);
+          printf("%s[%d]      =    %d\n", allNames[i], j + entry->value.avalue.first, tmp);
         } else {
           int tmp; fscanf(f, "%d", &tmp);
-          printf("%s[%d]      =    %d\n", allNames[i], j, tmp);
+          printf("%s[%d]      =    %d\n", allNames[i], j + entry->value.avalue.first, tmp);
         }
       }
       printf(":::::::::::::::::::::::::::::::\n");

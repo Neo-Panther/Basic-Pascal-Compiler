@@ -4,7 +4,6 @@
   #include<stdlib.h>
   #include<ctype.h>
   #include<stdbool.h>
-  #include<math.h>
   #include "extra.h"
   // 300 variable name max length
   extern FILE* yyin;
@@ -41,20 +40,17 @@
   binarynode* syntaxroot;
   // Type, avalue has to be set separately
   void addToSymbolTable(char* name){
-    bool newv = false;
     if(symboltable[calcValue(name[0])] == (trienode*)0){
-      newv = true;
       symboltable[calcValue(name[0])] = (trienode*)calloc(1, sizeof(trienode));
     }
     trienode* cnode = symboltable[calcValue(name[0])];
     for(int i = 1; i < strlen(name); i += 1){
       if(cnode->children[calcValue(name[i])] == (trienode*)0){
-        newv = true;
         cnode->children[calcValue(name[i])] = (trienode*)calloc(1, sizeof(trienode));
       }
       cnode = cnode->children[calcValue(name[i])];
     }
-    if(!newv){
+    if(cnode->isValid){
       sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: Multiple declarations of the variable: %s\n", line_no, name);
       return;
     }
@@ -169,15 +165,20 @@
     return new_node;
   }
   float getRealValue(char* name){
-    int num = atoi(name);
-    int numlen;
-    if(num == 0) numlen = 0;
-    else numlen = round(log(num)/log(10.0));
-    int den = atoi(name+2+numlen);
-    int denlen;
-    if(num == 0) denlen = 0;
-    else denlen = strlen(name)-2-numlen;
-    return (float)num+((float)den/(float)pow(10.0, denlen));
+    float num = (float)atoi(name);
+    int numlen = 0;
+    int num2 = num;
+    while(num2>0){
+      num2 /= 10;
+      numlen++;
+    }
+    if(num == 0) numlen = 1;
+    float den = (float)atoi(name+1+numlen);
+    int denlen = strlen(name)-1-numlen;
+    for(int i = 0; i < denlen; i++){
+      den /= 10.0;
+    }
+    return num + den;
   }
   void printSErrors(){
     printf("Number of Semantic Errors: %d\n", s_errors_i);
@@ -664,7 +665,7 @@ operation: operation PLUS operation{
 | opvalue {
   $$ = $1;
 }
-| '-' operation {
+| MINUS operation {
   if($2.type != 'i' && $2.type != 'r'){
     sprintf(s_errors[s_errors_i++], "Line %d: Semantic Error: '-' - value must be real or integer", line_no);
   }
@@ -674,7 +675,7 @@ operation: operation PLUS operation{
   sprintf(tac[tac_i++], "%s := -%s\n", $$.name, $2.name);
   $$.nd = mknode(NULL, $2.nd, "-");
 } %prec MUL
-| '+' operation {
+| PLUS operation {
   $$.value = $2.value;
   $$.type = $2.type;
   sprintf($$.name, "$t%d", temp_var++);
