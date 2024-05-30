@@ -19,12 +19,3 @@ Run the following in order (in folder TASK 2):
 > ./a.out
 ```
 Enter the input file name at the prompt.
-
-## Group Members
-
-S.No.  ID             Name
-1.     2021A7PS0136H  Anmol Agarwal
-2.     2021A7PS0162H  Aryan Gupta
-3.     2021A7PS1407H  Subal Tankwal
-4.     2021A7PS2689H  Mihir Kulkarni
-5.     2021A7PS2808H  Shrey Paunwala
