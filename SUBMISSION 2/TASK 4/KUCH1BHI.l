@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "extra.h"
+#include <ctype.h>
 #include "y.tab.h"
 int line_no=1;
 %}
@@ -52,7 +53,14 @@ NOT         {strcpy(yylval.sname.name, yytext); return NOT;}
 "read"       {strcpy(yylval.sname.name, yytext); return READ; }
 "write"      {strcpy(yylval.sname.name, yytext); return WRITE; }
 "of"         {strcpy(yylval.sname.name, yytext); return OF;}   
-{letter}({letter}|{digit}|{underscore})*  {strcpy(yylval.sname.name, yytext); return ID; }
+{letter}({letter}|{digit}|{underscore})*  {
+  int i;
+  for(i = 0; i < yyleng; i++){
+    yylval.sname.name[i] = tolower(yytext[i]);
+  }
+  yylval.sname.name[i] = 0;
+  return ID; 
+  }
 {digit}+"."{digit}{1,7} {strcpy(yylval.sname.name, yytext); return LREAL;}
 {digit}+   {strcpy(yylval.sname.name, yytext); return LINTEGER; }
 {char}      {strcpy(yylval.sname.name, yytext); return LCHAR;}
